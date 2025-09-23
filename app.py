@@ -632,6 +632,41 @@ def delete_conversation(conversation_id):
             'error': str(e)
         }), 500
 
+@app.route('/api/conversations/character/<character_name>', methods=['GET'])
+def get_character_conversations(character_name):
+    """
+    获取特定角色的对话历史
+    """
+    try:
+        # 查找该角色的所有对话
+        character_conversations = []
+        for conv_id, conv_data in conversations.items():
+            if conv_data.get('character_name') == character_name:
+                character_conversations.append({
+                    'id': conv_id,
+                    'character_name': conv_data.get('character_name'),
+                    'character_description': conv_data.get('character_description'),
+                    'messages': conv_data.get('messages', []),
+                    'created_at': conv_data.get('created_at'),
+                    'last_message_time': conv_data.get('messages', [])[-1].get('timestamp') if conv_data.get('messages') else conv_data.get('created_at')
+                })
+        
+        # 按最后消息时间排序，最新的在前
+        character_conversations.sort(key=lambda x: x['last_message_time'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'character_name': character_name,
+            'conversations': character_conversations,
+            'total': len(character_conversations)
+        })
+    except Exception as e:
+        logger.error(f"获取角色对话历史错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
@@ -671,6 +706,7 @@ if __name__ == '__main__':
     print("  • GET  /api/characters/<id> - 获取特定角色")
     print("  • GET  /api/characters/search - 搜索角色")
     print("  • GET  /api/conversations - 获取对话列表")
+    print("  • GET  /api/conversations/character/<name> - 获取特定角色对话历史")
     print("  • DELETE /api/conversations/<id> - 删除对话")
     print("  • GET  /api/health - 健康检查")
     print("=" * 60)
