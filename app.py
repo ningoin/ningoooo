@@ -11,6 +11,7 @@ import tempfile
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from database import get_database
 
 # 加载环境变量
 load_dotenv('config.env')
@@ -27,7 +28,15 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'your-openai-api-key')
 OPENAI_API_URL = os.getenv('OPENAI_API_URL', 'https://api.openai.com/v1')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
 
-# 存储对话的字典（生产环境建议使用Redis或数据库）
+# 初始化数据库连接
+try:
+    db = get_database()
+    logger.info("MongoDB数据库连接成功")
+except Exception as e:
+    logger.error(f"MongoDB数据库连接失败: {str(e)}")
+    db = None
+
+# 内存中的对话缓存（用于快速访问）
 conversations = {}
 
 # 角色库数据（与前端保持一致）
@@ -261,22 +270,48 @@ def chat_with_ai():
         # 如果没有提供conversation_id，创建新的对话
         if not conversation_id:
             conversation_id = str(uuid.uuid4())
-            conversations[conversation_id] = {
+            conversation_data = {
+                'conversation_id': conversation_id,
                 'user_id': user_id,
                 'character_name': character_name,
                 'character_description': character_description,
                 'messages': [],
                 'created_at': datetime.now().isoformat()
             }
-        # 如果conversation_id不在conversations中，说明是无效的对话ID
-        elif conversation_id not in conversations:
-            conversations[conversation_id] = {
-                'user_id': user_id,
-                'character_name': character_name,
-                'character_description': character_description,
-                'messages': [],
-                'created_at': datetime.now().isoformat()
-            }
+            conversations[conversation_id] = conversation_data
+            
+            # 保存到数据库
+            if db:
+                db.save_conversation(conversation_data)
+        else:
+            # 尝试从数据库加载对话
+            if db:
+                conversation_data = db.get_conversation(conversation_id)
+                if conversation_data:
+                    conversations[conversation_id] = conversation_data
+                else:
+                    # 如果数据库中没有，创建新的
+                    conversation_data = {
+                        'conversation_id': conversation_id,
+                        'user_id': user_id,
+                        'character_name': character_name,
+                        'character_description': character_description,
+                        'messages': [],
+                        'created_at': datetime.now().isoformat()
+                    }
+                    conversations[conversation_id] = conversation_data
+                    db.save_conversation(conversation_data)
+            else:
+                # 如果数据库不可用，使用内存存储
+                if conversation_id not in conversations:
+                    conversations[conversation_id] = {
+                        'conversation_id': conversation_id,
+                        'user_id': user_id,
+                        'character_name': character_name,
+                        'character_description': character_description,
+                        'messages': [],
+                        'created_at': datetime.now().isoformat()
+                    }
         
         logger.info(f"处理用户消息: {user_message[:50]}... (对话ID: {conversation_id})")
         
@@ -299,6 +334,13 @@ def chat_with_ai():
             'content': ai_response,
             'timestamp': datetime.now().isoformat()
         })
+        
+        # 保存到数据库
+        if db:
+            db.save_conversation(conversations[conversation_id])
+            
+            # 保存用户记忆（基于对话内容提取关键信息）
+            save_user_memory_from_conversation(user_id, character_name, user_message, ai_response)
         
         return jsonify({
             'success': True,
@@ -435,6 +477,61 @@ def get_role_by_name(role_name):
             return role
     return None
 
+def save_user_memory_from_conversation(user_id, character_name, user_message, ai_response):
+    """
+    从对话中提取并保存用户记忆
+    """
+    try:
+        if not db:
+            return
+            
+        # 获取现有记忆
+        existing_memory = db.get_user_memory(user_id, character_name) or {}
+        
+        # 简单的记忆提取逻辑（可以根据需要扩展）
+        memory_updates = {
+            'last_conversation_time': datetime.now().isoformat(),
+            'total_messages': existing_memory.get('total_messages', 0) + 1,
+            'user_preferences': existing_memory.get('user_preferences', {}),
+            'conversation_topics': existing_memory.get('conversation_topics', [])
+        }
+        
+        # 提取用户偏好（简单示例）
+        if '喜欢' in user_message or '不喜欢' in user_message:
+            if '喜欢' in user_message:
+                memory_updates['user_preferences']['likes'] = memory_updates['user_preferences'].get('likes', [])
+            if '不喜欢' in user_message:
+                memory_updates['user_preferences']['dislikes'] = memory_updates['user_preferences'].get('dislikes', [])
+        
+        # 保存记忆
+        db.save_user_memory(user_id, character_name, memory_updates)
+        
+    except Exception as e:
+        logger.error(f"保存用户记忆失败: {str(e)}")
+
+def load_user_memory_for_conversation(user_id, character_name):
+    """
+    为对话加载用户记忆
+    """
+    try:
+        if not db:
+            return {}
+            
+        # 获取用户记忆
+        user_memory = db.get_user_memory(user_id, character_name) or {}
+        
+        # 获取最近的对话历史
+        recent_conversations = db.get_recent_conversations(user_id, character_name, limit=5)
+        
+        return {
+            'user_memory': user_memory,
+            'recent_conversations': recent_conversations
+        }
+        
+    except Exception as e:
+        logger.error(f"加载用户记忆失败: {str(e)}")
+        return {}
+
 def call_openai_api(user_message, character_name, character_description, conversation_id):
     """
     调用OpenAI Chat Completions API获取AI回复
@@ -445,7 +542,15 @@ def call_openai_api(user_message, character_name, character_description, convers
             'Authorization': f'Bearer {OPENAI_API_KEY}'
         }
         
-        # 构建系统提示词
+        # 获取用户ID
+        user_id = conversations.get(conversation_id, {}).get('user_id', '')
+        
+        # 加载用户记忆和历史对话
+        memory_data = load_user_memory_for_conversation(user_id, character_name) if user_id else {}
+        user_memory = memory_data.get('user_memory', {})
+        recent_conversations = memory_data.get('recent_conversations', [])
+        
+        # 构建增强的系统提示词
         system_prompt = f"""你是{character_name}，{character_description}
 
 请严格按照以下要求进行角色扮演：
@@ -453,9 +558,24 @@ def call_openai_api(user_message, character_name, character_description, convers
 2. 保持角色的性格特点和说话风格
 3. 回复要生动有趣，符合角色设定
 4. 回复长度控制在100-300字之间
-5. 使用中文回复
+5. 使用中文回复"""
 
-现在开始与用户对话："""
+        # 添加用户记忆信息到系统提示词
+        if user_memory:
+            memory_info = []
+            if user_memory.get('total_messages', 0) > 0:
+                memory_info.append(f"你与这个用户已经进行了{user_memory['total_messages']}次对话")
+            
+            if user_memory.get('user_preferences', {}).get('likes'):
+                memory_info.append(f"用户喜欢：{', '.join(user_memory['user_preferences']['likes'])}")
+            
+            if user_memory.get('user_preferences', {}).get('dislikes'):
+                memory_info.append(f"用户不喜欢：{', '.join(user_memory['user_preferences']['dislikes'])}")
+            
+            if memory_info:
+                system_prompt += f"\n\n关于这个用户的记忆：\n" + "\n".join(memory_info)
+        
+        system_prompt += "\n\n现在开始与用户对话："
         
         # 构建消息列表
         messages = [{"role": "system", "content": system_prompt}]
@@ -596,11 +716,23 @@ def get_conversations():
     获取所有对话列表
     """
     try:
-        return jsonify({
-            'success': True,
-            'conversations': list(conversations.keys()),
-            'total': len(conversations)
-        })
+        user_id = request.args.get('user_id')
+        
+        if user_id and db:
+            # 从数据库获取用户的对话列表
+            user_conversations = db.get_user_conversations(user_id)
+            return jsonify({
+                'success': True,
+                'conversations': user_conversations,
+                'total': len(user_conversations)
+            })
+        else:
+            # 返回内存中的对话列表
+            return jsonify({
+                'success': True,
+                'conversations': list(conversations.keys()),
+                'total': len(conversations)
+            })
     except Exception as e:
         logger.error(f"获取对话列表错误: {str(e)}")
         return jsonify({
@@ -614,8 +746,19 @@ def delete_conversation(conversation_id):
     删除指定对话
     """
     try:
+        success = False
+        
+        # 从内存中删除
         if conversation_id in conversations:
             del conversations[conversation_id]
+            success = True
+        
+        # 从数据库中删除
+        if db:
+            db_success = db.delete_conversation(conversation_id)
+            success = success or db_success
+        
+        if success:
             return jsonify({
                 'success': True,
                 'message': f'对话 {conversation_id} 已删除'
@@ -667,11 +810,156 @@ def get_character_conversations(character_name):
             'error': str(e)
         }), 500
 
+@app.route('/api/memory/<user_id>', methods=['GET'])
+def get_user_memories(user_id):
+    """
+    获取用户的所有记忆
+    """
+    try:
+        if not db:
+            return jsonify({
+                'success': False,
+                'error': '数据库不可用'
+            }), 500
+        
+        memories = db.get_user_all_memories(user_id)
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'memories': memories,
+            'total': len(memories)
+        })
+    except Exception as e:
+        logger.error(f"获取用户记忆错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/memory/<user_id>/<character_name>', methods=['GET'])
+def get_user_character_memory(user_id, character_name):
+    """
+    获取用户与特定角色的记忆
+    """
+    try:
+        if not db:
+            return jsonify({
+                'success': False,
+                'error': '数据库不可用'
+            }), 500
+        
+        memory = db.get_user_memory(user_id, character_name)
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'character_name': character_name,
+            'memory': memory
+        })
+    except Exception as e:
+        logger.error(f"获取用户角色记忆错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/memory/<user_id>/<character_name>', methods=['POST'])
+def save_user_memory(user_id, character_name):
+    """
+    手动保存用户记忆
+    """
+    try:
+        if not db:
+            return jsonify({
+                'success': False,
+                'error': '数据库不可用'
+            }), 500
+        
+        data = request.get_json()
+        memory_data = data.get('memory_data', {})
+        
+        success = db.save_user_memory(user_id, character_name, memory_data)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': '记忆保存成功'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '记忆保存失败'
+            }), 500
+    except Exception as e:
+        logger.error(f"保存用户记忆错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/database/stats', methods=['GET'])
+def get_database_stats():
+    """
+    获取数据库统计信息
+    """
+    try:
+        if not db:
+            return jsonify({
+                'success': False,
+                'error': '数据库不可用'
+            }), 500
+        
+        stats = db.get_database_stats()
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        logger.error(f"获取数据库统计信息错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/database/cleanup', methods=['POST'])
+def cleanup_old_conversations():
+    """
+    清理旧的对话记录
+    """
+    try:
+        if not db:
+            return jsonify({
+                'success': False,
+                'error': '数据库不可用'
+            }), 500
+        
+        data = request.get_json()
+        days = data.get('days', 30)
+        
+        deleted_count = db.cleanup_old_conversations(days)
+        
+        return jsonify({
+            'success': True,
+            'message': f'清理完成，删除了 {deleted_count} 条旧对话记录',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        logger.error(f"清理旧对话记录错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
     健康检查端点
     """
+    db_status = "connected" if db else "disconnected"
+    db_stats = db.get_database_stats() if db else {}
+    
     return jsonify({
         'status': 'healthy',
         'message': 'AI角色扮演平台后端服务运行正常',
@@ -680,12 +968,16 @@ def health_check():
         'openai_api_key_configured': bool(OPENAI_API_KEY and OPENAI_API_KEY != 'your-openai-api-key'),
         'active_conversations': len(conversations),
         'total_roles': len(ROLE_LIBRARY),
+        'database_status': db_status,
+        'database_stats': db_stats,
         'features': {
             'voice_transcription': True,
             'role_management': True,
             'character_chat': True,
             'conversation_history': True,
-            'direct_openai_integration': True
+            'direct_openai_integration': True,
+            'persistent_storage': bool(db),
+            'user_memory': bool(db)
         }
     })
 
@@ -708,7 +1000,20 @@ if __name__ == '__main__':
     print("  • GET  /api/conversations - 获取对话列表")
     print("  • GET  /api/conversations/character/<name> - 获取特定角色对话历史")
     print("  • DELETE /api/conversations/<id> - 删除对话")
+    print("  • GET  /api/memory/<user_id> - 获取用户所有记忆")
+    print("  • GET  /api/memory/<user_id>/<character_name> - 获取用户角色记忆")
+    print("  • POST /api/memory/<user_id>/<character_name> - 保存用户记忆")
+    print("  • GET  /api/database/stats - 获取数据库统计信息")
+    print("  • POST /api/database/cleanup - 清理旧对话记录")
     print("  • GET  /api/health - 健康检查")
+    print("=" * 60)
+    print(f"🗄️  MongoDB状态: {'✅ 已连接' if db else '❌ 未连接'}")
+    if db:
+        try:
+            stats = db.get_database_stats()
+            print(f"📊 数据库统计: {stats.get('conversations_count', 0)} 对话, {stats.get('user_memories_count', 0)} 记忆")
+        except:
+            pass
     print("=" * 60)
     print("🌐 请在浏览器中访问 http://localhost:5000/api/health 检查服务状态")
     print("=" * 60)
