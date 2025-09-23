@@ -203,6 +203,8 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
+      max-height: 400px; /* 限制高度，只显示第一行 */
+      overflow: hidden; /* 隐藏超出部分 */
     }
     
     .role-card-large {
@@ -1441,6 +1443,8 @@
       
       .role-grid {
         grid-template-columns: 1fr;
+        max-height: 300px; /* 移动端也限制高度 */
+        overflow: hidden;
       }
       
       .library-filters {
@@ -1449,34 +1453,8 @@
     }
     
     /* 角色搜索区域 */
-    .search-section {
-      margin-bottom: 15px;
-      width: 100%;
-    }
-    
-    .sidebar .search-section {
-      margin-bottom: 20px;
-    }
-    
-    .search-box {
-      background: white;
-      border-radius: 12px;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    
-    .search-input {
-      flex: 1;
-      border: none;
-      padding: 10px;
-      font-size: 14px;
-      outline: none;
-    }
-    
-    /* 热门角色 */
-    .role-section {
+    /* 当前角色显示区域 */
+    .current-role-section {
       margin-bottom: 15px;
     }
     
@@ -1487,11 +1465,50 @@
       color: #333;
     }
     
-    .role-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    .current-role-display {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .current-role-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       gap: 10px;
-      margin-bottom: 15px;
+    }
+    
+    .placeholder-text {
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .current-role-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .current-role-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e2e8f0;
+    }
+    
+    .current-role-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #1e293b;
+      text-align: center;
     }
     
     .role-card {
@@ -1770,6 +1787,70 @@
       background: linear-gradient(135deg, #64748b, #475569);
     }
     
+    /* 音量控制样式 */
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 20px;
+      padding: 6px 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .volume-slider {
+      width: 80px;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #e5e7eb 0%, #e5e7eb 100%);
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .volume-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .volume-slider::-moz-range-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .volume-slider::-moz-range-track {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e7eb;
+      border: none;
+    }
+    
     /* 侧边栏导航 */
     .side-nav {
       margin-bottom: 20px;
@@ -1891,49 +1972,14 @@
         </button>
       </div>
       
-      <!-- 搜索区域 -->
-      <div class="search-section">
-        <div class="search-box">
-          <iconify-icon icon="mdi:magnify" style="font-size: 16px; color: #64748b;" aria-hidden="true"></iconify-icon>
-          <input type="text" class="search-input" placeholder="搜索角色..." aria-label="搜索角色">
-        </div>
-      </div>
-      
-      <div class="role-section">
-        <h2 class="section-title">角色库</h2>
-        <div class="role-cards">
-          <button class="role-card" aria-label="选择角色：精灵魔法师">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg" alt="精灵魔法师角色头像" class="role-image" loading="lazy">
-            <div class="role-name">精灵魔法师</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：未来战士">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293722/aigp_1758521101.jpeg" alt="未来战士角色头像" class="role-image" loading="lazy">
-            <div class="role-name">未来战士</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：古代帝王">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg" alt="古代帝王角色头像" class="role-image" loading="lazy">
-            <div class="role-name">古代帝王</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：名侦探">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg" alt="名侦探角色头像" class="role-image" loading="lazy">
-            <div class="role-name">名侦探</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：机器人">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg" alt="机器人角色头像" class="role-image" loading="lazy">
-            <div class="role-name">机器人</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：女巫">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg" alt="女巫角色头像" class="role-image" loading="lazy">
-            <div class="role-name">女巫</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：太空探险家">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg" alt="太空探险家角色头像" class="role-image" loading="lazy">
-            <div class="role-name">太空探险家</div>
-          </button>
-          <button class="role-card" aria-label="选择角色：武侠大师">
-            <img src="https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg" alt="武侠大师角色头像" class="role-image" loading="lazy">
-            <div class="role-name">武侠大师</div>
-          </button>
+      <!-- 当前对话角色显示区域 -->
+      <div class="current-role-section">
+        <h2 class="section-title">当前角色</h2>
+        <div class="current-role-display" id="currentRoleDisplay">
+          <div class="current-role-placeholder">
+            <iconify-icon icon="mdi:account-circle" style="font-size: 80px; color: #cbd5e1;" aria-hidden="true"></iconify-icon>
+            <div class="placeholder-text">未选择角色</div>
+          </div>
         </div>
       </div>
     </aside>
@@ -1995,9 +2041,11 @@
         <button class="control-btn record-btn" id="recordBtn" aria-label="开始录音" aria-pressed="false">
           <iconify-icon icon="mdi:microphone" style="font-size: 32px;" aria-hidden="true"></iconify-icon>
         </button>
-        <button class="control-btn tts-toggle-btn" id="ttsToggleBtn" aria-label="语音播放开关" aria-pressed="true">
-          <iconify-icon icon="mdi:volume-high" style="font-size: 24px;" aria-hidden="true"></iconify-icon>
-        </button>
+        <div class="volume-control">
+          <iconify-icon icon="mdi:volume-low" style="font-size: 20px; color: #666;" aria-hidden="true"></iconify-icon>
+          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="80" aria-label="音量控制">
+          <iconify-icon icon="mdi:volume-high" style="font-size: 20px; color: #666;" aria-hidden="true"></iconify-icon>
+        </div>
         <button class="control-btn settings-btn" aria-label="音频设置">
           <iconify-icon icon="mdi:equalizer" style="font-size: 24px;" aria-hidden="true"></iconify-icon>
         </button>
@@ -2636,6 +2684,7 @@
     let currentRole = '星际指挥官';
     let currentPage = 'chat';
     let ttsEnabled = true; // TTS开关状态
+    let volumeLevel = 80; // 音量级别 (0-100)
     
     // DOM 元素
     const recordBtn = document.getElementById('recordBtn');
@@ -2643,6 +2692,7 @@
     const chatMessages = document.querySelector('.chat-messages');
     const roleTitle = document.querySelector('.role-title');
     const ttsToggleBtn = document.getElementById('ttsToggleBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
     
     // 收藏数据
     const favoriteRoles = [
@@ -3184,6 +3234,10 @@
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         
+        // 设置音量 (0.0 到 1.0)
+        audio.volume = volumeLevel / 100;
+        console.log('设置音量:', volumeLevel + '%');
+        
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
           console.log('TTS播放完成');
@@ -3195,7 +3249,7 @@
         };
         
         await audio.play();
-        console.log('TTS播放开始');
+        console.log('TTS播放开始，音量:', volumeLevel + '%');
         
       } catch (error) {
         console.error('TTS播放失败:', error);
@@ -3209,6 +3263,10 @@
         const audioBlob = new Blob([audioData], { type: 'audio/wav' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
+        
+        // 设置音量 (0.0 到 1.0)
+        audio.volume = volumeLevel / 100;
+        console.log('播放音频回复，音量:', volumeLevel + '%');
         
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
@@ -3347,13 +3405,16 @@
           </div>
         </div>
       `).join('');
+      
+      // 绑定筛选器事件
+      bindFilterEvents();
     }
     
     // 从角色库选择角色
-    function selectRoleFromLibrary(roleId) {
+    async function selectRoleFromLibrary(roleId) {
       const role = roleLibrary.find(r => r.id === roleId);
       if (role) {
-        selectRole(role.name, role.image);
+        await selectRole(role.name, role.image);
         switchPage('chatPage');
       }
     }
@@ -3367,7 +3428,8 @@
     }
     
     // 角色选择功能
-    function selectRole(roleName, roleImage) {
+    async function selectRole(roleName, roleImage) {
+      console.log(`开始切换到角色: "${roleName}"`);
       currentRole = roleName;
       roleTitle.textContent = roleName;
       
@@ -3377,27 +3439,109 @@
         avatar.innerHTML = `<img src="${roleImage}" alt="${roleName}头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
       }
       
-      // 添加切换提示
-      addMessage(`已切换到角色：${roleName}`, 'system');
+      // 更新左侧当前角色显示
+      updateCurrentRoleDisplay(roleName, roleImage);
       
-      // 清空当前对话，开始新的对话
+      // 清空当前对话
+      console.log('清空当前对话...');
       clearCurrentConversation();
+      
+      // 加载该角色的历史对话
+      console.log('加载角色历史对话...');
+      await loadCharacterConversationHistory(roleName);
+      
+      // 添加切换提示
+      console.log('添加切换提示...');
+      addMessage(`已切换到角色：${roleName}`, 'system');
+      console.log(`角色切换完成: "${roleName}"`);
+    }
+    
+    // 更新左侧当前角色显示
+    function updateCurrentRoleDisplay(roleName, roleImage) {
+      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
+      if (!currentRoleDisplay) return;
+      
+      if (roleName && roleImage) {
+        currentRoleDisplay.innerHTML = `
+          <div class="current-role-card">
+            <img src="${roleImage}" alt="${roleName}头像" class="current-role-image" loading="lazy">
+            <div class="current-role-name">${roleName}</div>
+          </div>
+        `;
+      } else {
+        currentRoleDisplay.innerHTML = `
+          <div class="current-role-placeholder">
+            <iconify-icon icon="mdi:account-circle" style="font-size: 80px; color: #cbd5e1;" aria-hidden="true"></iconify-icon>
+            <div class="placeholder-text">未选择角色</div>
+          </div>
+        `;
+      }
     }
     
     // 清空当前对话
     function clearCurrentConversation() {
-      const messagesContainer = document.querySelector('.messages');
+      const messagesContainer = document.querySelector('.chat-messages');
       if (messagesContainer) {
+        console.log('清空对话消息，之前有', messagesContainer.children.length, '条消息');
         messagesContainer.innerHTML = '';
+        console.log('清空后剩余', messagesContainer.children.length, '条消息');
+      } else {
+        console.warn('未找到消息容器 .chat-messages');
+      }
+    }
+    
+    // 加载角色的历史对话
+    async function loadCharacterConversationHistory(characterName) {
+      try {
+        console.log(`开始加载角色 "${characterName}" 的历史对话`);
+        const response = await fetch(`http://localhost:5000/api/conversations/character/${encodeURIComponent(characterName)}`);
+        const data = await response.json();
+        
+        console.log(`角色 "${characterName}" 的历史对话数据:`, data);
+        
+        if (data.success && data.conversations && data.conversations.length > 0) {
+          // 获取最新的对话（第一个）
+          const latestConversation = data.conversations[0];
+          console.log(`找到 ${data.conversations.length} 个历史对话，显示最新的对话`);
+          
+          // 显示历史消息
+          if (latestConversation.messages && latestConversation.messages.length > 0) {
+            console.log(`显示 ${latestConversation.messages.length} 条历史消息`);
+            // 添加一个分隔线表示历史对话
+            addMessage(`--- 与${characterName}的历史对话 ---`, 'system');
+            
+            // 显示历史消息（限制显示最近10条消息，避免界面过于拥挤）
+            const recentMessages = latestConversation.messages.slice(-10);
+            recentMessages.forEach(msg => {
+              if (msg.role === 'user') {
+                addMessage(msg.content, 'sent');
+              } else if (msg.role === 'assistant') {
+                addMessage(msg.content, 'received');
+              }
+            });
+            
+            // 添加分隔线
+            addMessage(`--- 继续对话 ---`, 'system');
+          }
+        } else {
+          console.log(`角色 "${characterName}" 没有历史对话记录`);
+        }
+      } catch (error) {
+        console.error('加载角色历史对话失败:', error);
+        // 如果加载失败，不影响正常使用，只是不显示历史对话
       }
     }
     
     // 角色库筛选功能
     function filterRoles(category) {
+      console.log('filterRoles 被调用，分类:', category);
+      console.log('roleLibrary 总数:', roleLibrary.length);
+      
       const filteredRoles = category === 'all' 
         ? roleLibrary 
         : roleLibrary.filter(role => role.category === category);
       
+      console.log('筛选后角色数量:', filteredRoles.length);
       renderRoleLibrary(filteredRoles);
     }
     
@@ -3492,10 +3636,10 @@
     }
     
     // 继续对话
-    function continueConversation(conversationId) {
+    async function continueConversation(conversationId) {
       const conv = conversationHistory.find(c => c.id === conversationId);
       if (conv) {
-        selectRole(conv.roleName, conv.roleImage);
+        await selectRole(conv.roleName, conv.roleImage);
         switchPage('chatPage');
         addMessage(`继续与${conv.roleName}的对话`, 'system');
       }
@@ -3674,10 +3818,10 @@
     }
     
     // 选择收藏角色
-    function selectFavoriteRole(roleId) {
+    async function selectFavoriteRole(roleId) {
       const role = favoriteRoles.find(r => r.id === roleId);
       if (role) {
-        selectRole(role.name, role.image);
+        await selectRole(role.name, role.image);
         switchPage('chatPage');
       }
     }
@@ -3694,10 +3838,10 @@
     }
     
     // 继续收藏对话
-    function continueFavoriteConversation(conversationId) {
+    async function continueFavoriteConversation(conversationId) {
       const conv = favoriteConversations.find(c => c.id === conversationId);
       if (conv) {
-        selectRole(conv.roleName, conv.roleImage);
+        await selectRole(conv.roleName, conv.roleImage);
         switchPage('chatPage');
         addMessage(`继续与${conv.roleName}的对话`, 'system');
       }
@@ -3987,6 +4131,17 @@
       }
     });
     
+    // 音量滑块事件监听器
+    if (volumeSlider) {
+      volumeSlider.addEventListener('input', function() {
+        volumeLevel = parseInt(this.value);
+        console.log('音量设置为:', volumeLevel + '%');
+      });
+      
+      // 初始化音量滑块值
+      volumeSlider.value = volumeLevel;
+    }
+    
     // 消息发送功能
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -4037,10 +4192,10 @@
     
     // 角色卡片点击事件
     document.querySelectorAll('.role-card').forEach(card => {
-      card.addEventListener('click', function() {
+      card.addEventListener('click', async function() {
         const roleName = this.querySelector('.role-name').textContent;
         const roleImage = this.querySelector('.role-image').src;
-        selectRole(roleName, roleImage);
+        await selectRole(roleName, roleImage);
       });
     });
     
@@ -4057,76 +4212,7 @@
       });
     });
     
-    // 角色库筛选器事件
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        // 更新按钮状态
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        
-        // 筛选角色
-        const category = this.getAttribute('data-category');
-        filterRoles(category);
-      });
-    });
     
-    // 角色库搜索事件
-    const librarySearchInput = document.getElementById('librarySearch');
-    if (librarySearchInput) {
-      librarySearchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim();
-        if (searchTerm === '') {
-          // 如果搜索框为空，显示当前筛选的所有角色
-          const activeFilter = document.querySelector('.filter-btn.active');
-          const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
-          filterRoles(category);
-        } else {
-          searchRoles(searchTerm);
-        }
-      });
-    }
-    
-    // 历史对话筛选器事件
-    document.querySelectorAll('.history-filter-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        // 更新按钮状态
-        document.querySelectorAll('.history-filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        
-        // 筛选历史记录
-        const filter = this.getAttribute('data-filter');
-        filterHistory(filter);
-      });
-    });
-    
-    // 历史对话搜索事件
-    const historySearchInput = document.getElementById('historySearch');
-    if (historySearchInput) {
-      historySearchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim();
-        if (searchTerm === '') {
-          // 如果搜索框为空，显示当前筛选的所有历史记录
-          const activeFilter = document.querySelector('.history-filter-btn.active');
-          const filter = activeFilter ? activeFilter.getAttribute('data-filter') : 'all';
-          filterHistory(filter);
-        } else {
-          searchHistory(searchTerm);
-        }
-      });
-    }
-    
-    // 我的收藏搜索事件
-    const favoriteRolesSearchInput = document.getElementById('favoriteRolesSearch');
-    if (favoriteRolesSearchInput) {
-      favoriteRolesSearchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim();
-        if (searchTerm === '') {
-          renderFavoriteRoles();
-        } else {
-          searchFavoriteRoles(searchTerm);
-        }
-      });
-    }
     
     const favoriteConversationsSearchInput = document.getElementById('favoriteConversationsSearch');
     if (favoriteConversationsSearchInput) {
@@ -4140,6 +4226,30 @@
       });
     }
     
+    // 角色库筛选器事件绑定函数
+    function bindFilterEvents() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        // 移除已存在的事件监听器（避免重复绑定）
+        btn.removeEventListener('click', handleFilterClick);
+        // 添加新的事件监听器
+        btn.addEventListener('click', handleFilterClick);
+      });
+    }
+    
+    // 筛选按钮点击处理函数
+    function handleFilterClick() {
+      console.log('筛选按钮被点击:', this.textContent, this.getAttribute('data-category'));
+      
+      // 更新按钮状态
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // 筛选角色
+      const category = this.getAttribute('data-category');
+      console.log('筛选分类:', category);
+      filterRoles(category);
+    }
+
     // 设置页面事件监听器
     document.addEventListener('DOMContentLoaded', function() {
       // 设置项变更时自动保存
@@ -4160,6 +4270,71 @@
           }
         }
       });
+      
+      
+      // 角色库搜索事件
+      const librarySearchInput = document.getElementById('librarySearch');
+      if (librarySearchInput) {
+        librarySearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            // 如果搜索框为空，显示当前筛选的所有角色
+            const activeFilter = document.querySelector('.filter-btn.active');
+            const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+            filterRoles(category);
+          } else {
+            searchRoles(searchTerm);
+          }
+        });
+      }
+      
+      // 历史对话筛选器事件
+      document.querySelectorAll('.history-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          // 更新按钮状态
+          document.querySelectorAll('.history-filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          // 筛选历史记录
+          const filter = this.getAttribute('data-filter');
+          filterHistory(filter);
+        });
+      });
+      
+      // 历史对话搜索事件
+      const historySearchInput = document.getElementById('historySearch');
+      if (historySearchInput) {
+        historySearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            renderHistoryList();
+          } else {
+            const filteredHistory = conversationHistory.filter(conv => 
+              conv.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              conv.messages.some(msg => msg.content.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            renderHistoryList(filteredHistory);
+          }
+        });
+      }
+      
+      // 我的收藏搜索事件
+      const favoritesSearchInput = document.getElementById('favoritesSearch');
+      if (favoritesSearchInput) {
+        favoritesSearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            renderFavoriteRoles();
+          } else {
+            const filteredFavorites = favoriteRoles.filter(role => 
+              role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            renderFavoriteRoles(filteredFavorites);
+          }
+        });
+      }
     });
     
     // 防抖函数
