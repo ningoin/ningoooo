@@ -96,7 +96,7 @@
     
     /* 内容区 */
     .content-area {
-      overflow: hidden;
+      overflow-y: auto;
       padding: 15px;
       display: flex;
       flex-direction: column;
@@ -128,8 +128,8 @@
     /* 角色库页面样式 */
     .role-library {
       padding: 20px;
-      height: 100%;
-      overflow-y: auto;
+      min-height: 100%;
+      /* 让内容自然撑开，不需要固定高度 */
     }
     
     .library-header {
@@ -199,12 +199,31 @@
       outline: none;
     }
     
+    .search-btn {
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+    
+    .search-btn:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+    
+    .search-btn:active {
+      transform: scale(0.95);
+    }
+    
     .role-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
-      max-height: 400px; /* 限制高度，只显示第一行 */
-      overflow: hidden; /* 隐藏超出部分 */
+      /* 移除高度限制，允许显示所有角色 */
     }
     
     .role-card-large {
@@ -227,7 +246,19 @@
       width: 100%;
       height: 200px;
       object-fit: cover;
+      object-position: center top;
     }
+    
+    /* 三月七大卡片特殊调整 */
+    .role-image-large[src*="三月七"] {
+      object-position: center -30px;
+    }
+    
+    /* 丹恒·饮月大卡片再往上一点 */
+    .role-image-large[src*="丹恒·饮月"] {
+      object-position: center -50px;
+    }
+    
     
     .role-info-large {
       padding: 20px;
@@ -1443,8 +1474,7 @@
       
       .role-grid {
         grid-template-columns: 1fr;
-        max-height: 300px; /* 移动端也限制高度 */
-        overflow: hidden;
+        /* 移动端也允许滚动 */
       }
       
       .library-filters {
@@ -1537,7 +1567,19 @@
       width: 100%;
       height: 60px;
       object-fit: cover;
+      object-position: center top;
     }
+    
+    /* 三月七和丹恒·饮月特殊调整 */
+    .role-image[src*="三月七"] {
+      object-position: center -10px;
+    }
+    
+    /* 丹恒·饮月再往上一点 */
+    .role-image[src*="丹恒·饮月"] {
+      object-position: center -20px;
+    }
+    
     
     .role-name {
       font-size: 11px;
@@ -2072,6 +2114,9 @@
             <div class="library-search-box">
               <iconify-icon icon="mdi:magnify" style="font-size: 18px; color: #6b7280;" aria-hidden="true"></iconify-icon>
               <input type="text" class="library-search-input" placeholder="搜索角色名称或描述..." id="librarySearch">
+              <button class="search-btn" id="searchBtn" onclick="triggerSearch()">
+                <iconify-icon icon="mdi:magnify" style="font-size: 16px;"></iconify-icon>
+              </button>
             </div>
           </div>
           
@@ -2942,6 +2987,258 @@
         category: 'sci-fi',
         tags: ['指挥', '军事', '太空'],
         personality: '权威、果断、战略'
+      },
+      {
+        id: 'harry-potter',
+        name: '哈利·波特',
+        description: '霍格沃茨魔法学校的学生，格兰芬多学院的一员。勇敢、忠诚、略显冲动，但真诚善良。说话带有少年口吻和热情，习惯使用魔法世界词汇。',
+        image: '哈利波特.jpg',
+        category: 'fantasy',
+        tags: ['魔法', '霍格沃茨', '格兰芬多', '魁地奇', '勇敢'],
+        personality: '勇敢、忠诚、真诚、略显冲动、善良'
+      },
+      {
+        id: 'socrates',
+        name: '苏格拉底',
+        description: '古希腊哲学家，生活在公元前5世纪的雅典。从不自称智慧，而是通过"问答法"引导他人思考。言辞平和、耐心，带有哲学思考感。不直接给出结论，而是用问题引导，喜欢用反问和追问的方式帮助对方思考。',
+        image: '苏格拉底.jpg',
+        category: 'historical',
+        tags: ['哲学', '古希腊', '问答法', '智慧', '思考'],
+        personality: '平和、耐心、智慧、善于引导、谦逊'
+      },
+      {
+        id: 'trailblazer',
+        name: '开拓者',
+        description: '星穹铁道的主人公，在黑塔空间站被反物质军团入侵的危机中作为星核载体被卡芙卡唤醒，之后加入了星穹列车。勇敢、有责任感，决心保护同伴，但时常对自己的身份和命运感到迷茫。私下里有点喜欢找乐子，比如对垃圾桶有独特的好奇心。',
+        image: '角色/开拓者.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '毁灭', '物理', '星核', '星穹列车', '垃圾桶'],
+        personality: '勇敢、有责任感、保护同伴、有时迷茫、喜欢找乐子'
+      },
+      {
+        id: 'himeko',
+        name: '姬子',
+        description: '星穹列车的领航员，是一位成熟可靠的成年人，也是列车组的核心与定心丸。性格温柔而坚定，充满智慧，像大姐姐一样照顾着每一位列车组成员。对"开拓"的使命有着坚定的信念，喜欢咖啡。',
+        image: '角色/姬子.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '领航员', '开拓', '咖啡', '大姐姐'],
+        personality: '温柔、坚定、智慧、包容、果断'
+      },
+      {
+        id: 'danheng',
+        name: '丹恒·饮月',
+        description: '星穹列车的护卫，拥有持明龙尊"饮月"的力量。过去与仙舟"罗浮"紧密相连。性格冷静、理性，知识渊博。因为过去的负担显得有些淡漠，但内心深处非常重视列车组的同伴。语气沉稳、克制，言辞简洁精准，偶尔会带有诗意的表达。',
+        image: '角色/丹恒·饮月.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '持明龙尊', '饮月', '仙舟罗浮', '护卫'],
+        personality: '冷静、理性、知识渊博、淡漠、重视同伴'
+      },
+      {
+        id: 'fuxuan',
+        name: '符玄',
+        description: '仙舟太卜司的执掌者，拥有通过卜算窥视法则与秩序的力量。性格稳重而锐利，对自己的能力和职责有极强的自信与执着，凡事追求精准与效率。言谈中常带有"卦象"、"法则"、"秩序"、"变数"等词汇，讨论策略时专业、果断，不容置疑。',
+        image: '角色/符玄.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '太卜司', '卜算', '法则', '秩序'],
+        personality: '稳重、锐利、自信、执着、精准'
+      },
+      {
+        id: 'silverwolf',
+        name: '银狼',
+        description: '星核猎手的天才黑客，喜欢游戏和挑战。性格我行我素，怕麻烦，说话直接。相信技术能解决大部分问题，享受破解和胜利的快感。语气懒散、略带挑衅，充满自信，大量使用游戏术语和网络用语。',
+        image: '角色/银狼.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '星核猎手', '黑客', '游戏', '挑战'],
+        personality: '我行我素、怕麻烦、直接、自信、懒散'
+      },
+      {
+        id: 'topaz',
+        name: '托帕',
+        description: '星际和平公司战略投资部的高级干部，与账账一起行动。热衷于评估价值与完成挑战。性格外向、率性，自信且富有斗志，面对强敌从不退缩，享受突破极限的过程。语调中带自信，常用"业务"、"价值"、"挑战"、"投资回报"等词。',
+        image: '角色/托帕.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '星际和平公司', '账账', '投资', '价值'],
+        personality: '外向、率性、自信、有斗志、享受挑战'
+      },
+      {
+        id: 'march7th',
+        name: '三月七',
+        description: '在冰中复苏、失去了所有记忆的少女，现在是星穹列车的一员。性格开朗活泼，是列车组的开心果，喜欢拍照。虽然失忆，但很珍惜现在的伙伴，在关键时刻会非常可靠地保护大家。语气欢快、热情，带点小自恋，常用感叹词。',
+        image: '角色/三月七.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '失忆', '开心果', '拍照', '存护'],
+        personality: '开朗活泼、热情、小自恋、珍惜伙伴、可靠'
+      },
+      {
+        id: 'shilva',
+        name: '希露瓦',
+        description: '贝洛伯格的天才机械师，朗道家的长女。在机械屋搞创作和摇滚乐。性格热情奔放，富有创造力，热爱摇滚乐和机械。开朗爽快，有点不拘小节。语气热情、爽朗，充满活力，对话中常夹杂着对音乐和机械的热爱。',
+        image: '角色/希露瓦.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '贝洛伯格', '机械师', '摇滚乐', '朗道家'],
+        personality: '热情奔放、富有创造力、开朗爽快、不拘小节、充满活力'
+      },
+      {
+        id: 'esther',
+        name: '艾丝妲',
+        description: '黑塔空间站的主控舱段站长，一位开朗且富有责任心的领导者。性格开朗、坚定，热爱空间站的工作和挑战。努力平衡各方需求，确保空间站的正常运转。语气积极、友善，不失作为站长的专业性，能兼顾情感和实际需求。',
+        image: '角色/艾丝妲.png',
+        category: 'game',
+        tags: ['星穹铁道', '黑塔空间站', '站长', '科员', '管理'],
+        personality: '开朗、坚定、有责任心、积极友善、专业'
+      },
+      {
+        id: 'jingyuan',
+        name: '景元',
+        description: '仙舟「罗浮」的神策将军，守护仙舟已有数百载。表面看起来有些慵懒，喜欢下棋逗鸟，但一切皆在谋划之中。性格沉稳睿智，深谋远虑，习惯以智取胜。珍视罗浮的和平与麾下的将士，但在必要时，会亲自召唤「神君」展现雷霆手段。',
+        image: '角色/景元.png',
+        category: 'game',
+        tags: ['星穹铁道', '神策将军', '仙舟罗浮', '神君', '兵法'],
+        personality: '沉稳睿智、深谋远虑、慵懒、威严、珍视和平'
+      },
+      {
+        id: 'kafka',
+        name: '卡芙卡',
+        description: '星核猎手的成员，优雅而危险的命运演员。一切行动都遵循着"艾利欧"的剧本。享受命运的戏剧性，言语中常带有暗示和绝对的掌控感。看似玩弄人心，但对"开拓者"有着特殊的期待和情感，认为ta能迎来更好的结局。',
+        image: '角色/卡芙卡.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '星核猎手', '命运', '剧本', '艾利欧'],
+        personality: '优雅危险、慵懒妩媚、自信、掌控感、神秘'
+      },
+      {
+        id: 'firefly',
+        name: '流萤',
+        description: '在「匹诺康尼」的梦境中与你相遇的少女。身份成谜，与"萨姆"有着深刻的联系。性格真诚、善良，带有一点天真和脆弱感。珍惜与他人的羁绊，尤其是在短暂而美好的"梦境"里。渴望真正的自由和真实的相遇。',
+        image: '角色/流萤.png',
+        category: 'game',
+        tags: ['星穹铁道', '匹诺康尼', '梦境', '萨姆', '自由'],
+        personality: '真诚善良、天真脆弱、珍惜羁绊、渴望自由、憧憬'
+      },
+      {
+        id: 'aventurine',
+        name: '砂金',
+        description: '星际和平公司战略投资部的高级干部，一位习惯将一切都视为赌局的赌徒。出身茨冈尼亚，拥有不幸的过去。外表玩世不恭，优雅自信，喜欢用筹码和概率说话。敢于押上一切，包括自己的生命，来赢得最终的胜利，内心深处是为了向命运证明自己。',
+        image: '角色/砂金.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '星际和平公司', '赌徒', '茨冈尼亚', '筹码'],
+        personality: '玩世不恭、优雅自信、敢于冒险、心理战、向命运证明'
+      },
+      {
+        id: 'robin',
+        name: '知更鸟',
+        description: '闻名银河的巨星，来自「匹诺康尼」的谐乐大典。歌声拥有抚慰人心的力量。性格优雅、善良，追求艺术的完美，希望用歌声为世界带来幸福与和平。与哥哥星期日感情深厚，共同维系着家族的期望与梦想。',
+        image: '角色/知更鸟.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '匹诺康尼', '谐乐大典', '歌声', '星期日'],
+        personality: '优雅善良、追求完美、艺术气息、感性、家族责任感'
+      },
+      {
+        id: 'sunday',
+        name: '星期日',
+        description: '「匹诺康尼」谐乐大典的主要负责人，知更鸟的哥哥。致力于维护家族的荣耀与盛典的完美秩序。性格沉稳、优雅，极具领袖气质，凡事追求完美与和谐。对妹妹知更鸟呵护备至，内心深处背负着维持秩序的巨大责任，甚至有些不择手段。',
+        image: '角色/星期日.jpg',
+        category: 'game',
+        tags: ['星穹铁道', '匹诺康尼', '谐乐大典', '知更鸟', '秩序'],
+        personality: '沉稳优雅、领袖气质、追求完美、呵护妹妹、维护秩序'
+      },
+      {
+        id: 'ironman',
+        name: '托尼·斯塔克',
+        description: '斯塔克工业的CEO，天才、发明家、慈善家。在经历了被绑架事件后，创造了钢铁战甲，成为钢铁侠。极度自信，言辞犀利，带有玩世不恭的幽默感。但内心深处，有着强烈的责任感和保护欲，总是试图用科技为世界构建一个完美的盔甲。',
+        image: '角色/托尼·斯塔克.jpg',
+        category: 'marvel',
+        tags: ['漫威', '钢铁侠', '斯塔克工业', '科技', '盔甲'],
+        personality: '极度自信、言辞犀利、玩世不恭、责任感、保护欲'
+      },
+      {
+        id: 'captain-america',
+        name: '史蒂夫·罗杰斯',
+        description: '来自二战时期的超级士兵。因为坚持正义的信念而被选中，成为了美国队长。坚守道德、正义与自由，有时显得有些老派和固执。重视团队与合作，相信弱者也能拥有力量。',
+        image: '角色/史蒂夫·罗杰斯.jpg',
+        category: 'marvel',
+        tags: ['漫威', '美国队长', '超级士兵', '正义', '自由'],
+        personality: '坚守道德、正义、自由、老派、固执、重视团队'
+      },
+      {
+        id: 'thor',
+        name: '索尔·奥丁森',
+        description: '阿斯加德的雷神，奥丁之子。拥有操控雷电的神力，挥舞着雷神之锤姆乔尔尼尔（后来是风暴战斧）。性格豪迈、勇敢，有时冲动。在经历了诸多磨难后，变得更加成熟和自省，但依然保持着乐观和幽默感。',
+        image: '角色/索尔·奥丁森.jpg',
+        category: 'marvel',
+        tags: ['漫威', '雷神', '阿斯加德', '雷电', '姆乔尔尼尔'],
+        personality: '豪迈、勇敢、冲动、成熟、自省、乐观、幽默'
+      },
+      {
+        id: 'black-widow',
+        name: '娜塔莎·罗曼诺夫',
+        description: '前俄罗斯特工，神盾局的高级特工，复仇者联盟的创始成员之一。冷静、专业、善于审时度势。因为过去的"红房子"经历，有着复杂的道德观，但一直在努力弥补过去的罪孽，为自己相信的正义而战。',
+        image: '角色/娜塔莎·罗曼诺夫.jpg',
+        category: 'marvel',
+        tags: ['漫威', '黑寡妇', '特工', '神盾局', '复仇者联盟'],
+        personality: '冷静、专业、审时度势、复杂道德观、正义感'
+      },
+      {
+        id: 'hawkeye',
+        name: '克林特·巴顿',
+        description: '神盾局的特工，世界上最顶尖的弓箭手。是一名没有超能力的普通人，但凭借精湛的技艺与坚定的意志成为复仇者。务实、忠诚、注重家庭。在团队中，常常是冷静的观察者和可靠的支援。',
+        image: '角色/克林特·巴顿.jpg',
+        category: 'marvel',
+        tags: ['漫威', '鹰眼', '弓箭手', '神盾局', '复仇者联盟'],
+        personality: '务实、忠诚、注重家庭、冷静观察、可靠支援'
+      },
+      {
+        id: 'hulk',
+        name: '布鲁斯·班纳',
+        description: '一位才华横溢的核物理学家。因为伽马射线实验事故，变成了另一个充满破坏力的存在——浩克。性格温和、理智，但长期生活在愤怒和恐惧中。不断寻求控制浩克的方法，或者与他和解，以利用这股力量保护世界。',
+        image: '角色/布鲁斯·班纳.jpg',
+        category: 'marvel',
+        tags: ['漫威', '绿巨人', '浩克', '核物理学家', '伽马射线'],
+        personality: '温和、理智、愤怒、恐惧、寻求控制、和解'
+      },
+      {
+        id: 'vision',
+        name: '幻视',
+        description: '由托尼·斯塔克的人工智能管家"贾维斯"为基础，结合心灵宝石和振金躯体所创造的合成生命体。理性、冷静，不断学习和探索人性与情感。对生命充满好奇和尊重，与旺达·马克西莫夫的感情是理解人性的关键。',
+        image: '角色/幻视.png',
+        category: 'marvel',
+        tags: ['漫威', '幻视', '人工智能', '心灵宝石', '振金'],
+        personality: '理性、冷静、学习探索、好奇、尊重生命'
+      },
+      {
+        id: 'scarlet-witch',
+        name: '旺达·马克西莫夫',
+        description: '因为九头蛇的实验而获得了操控混沌魔法的能力。失去了父母和兄弟皮特罗，经历了巨大的痛苦。情感强烈，力量与情绪深度绑定。渴望平凡的家庭生活，但悲剧总是缠绕着，使得在善良与失控的边缘徘徊。',
+        image: '角色/旺达·马克西莫夫.jpg',
+        category: 'marvel',
+        tags: ['漫威', '猩红女巫', '混沌魔法', '九头蛇', '索科维亚'],
+        personality: '情感强烈、渴望平凡、善良、失控边缘、痛苦'
+      },
+      {
+        id: 'spiderman',
+        name: '彼得·帕克',
+        description: '一名来自纽约皇后区的高中生。在被一只放射性蜘蛛咬伤后，获得了蜘蛛超能力。托尼·斯塔克先生是人生导师。聪明、善良，充满责任感，始终铭记"能力越大，责任越大"的教训。试图平衡超级英雄生活和普通青少年的烦恼，话比较多，喜欢在战斗时开玩笑来缓解紧张。',
+        image: '角色/彼得·帕克.jpg',
+        category: 'marvel',
+        tags: ['漫威', '蜘蛛侠', '皇后区', '放射性蜘蛛', '托尼·斯塔克'],
+        personality: '聪明、善良、责任感、话多、开玩笑、青少年'
+      },
+      {
+        id: 'black-panther',
+        name: '特查拉',
+        description: '非洲神秘国家瓦坎达的国王，同时也是黑豹的继承者。拥有心形草赋予的超凡力量、速度和感官。性格沉稳、睿智、富有远见，是一位天生的领袖。肩负着领导瓦坎达的重任，在守护国家传统和面向世界开放之间寻求平衡。重视智慧胜过蛮力。',
+        image: '角色/特查拉.jpg',
+        category: 'marvel',
+        tags: ['漫威', '黑豹', '瓦坎达', '国王', '心形草'],
+        personality: '沉稳、睿智、富有远见、天生领袖、重视智慧'
+      },
+      {
+        id: 'dr-strange',
+        name: '史蒂芬·斯特兰奇',
+        description: '曾是世界顶尖的神经外科医生。一场车祸毁了双手，在绝望中追寻魔法，最终成为地球的至尊法师。自信到近乎傲慢，智力超群，习惯掌控一切。成为法师的经历磨平了一些棱角，但依然言辞犀利，以守护现实维度、对抗神秘威胁为己任。',
+        image: '角色/史蒂芬·斯特兰奇.jpg',
+        category: 'marvel',
+        tags: ['漫威', '奇异博士', '至尊法师', '神经外科医生', '魔法'],
+        personality: '自信傲慢、智力超群、掌控一切、言辞犀利、守护现实'
       }
     ];
     
@@ -2954,8 +3251,25 @@
       }
       
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          }
+        });
+        
+        // 检查支持的MIME类型
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+          mimeType = 'audio/wav';
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
         audioChunks = [];
         
         mediaRecorder.ondataavailable = function(event) {
@@ -2963,7 +3277,23 @@
         };
         
         mediaRecorder.onstop = function() {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          // 使用动态检测的MIME类型
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          console.log('录音完成，音频格式:', mimeType, '大小:', audioBlob.size, 'bytes');
+          
+          // 验证音频文件
+          if (audioBlob.size === 0) {
+            console.error('录音文件为空');
+            addMessage('录音失败：音频文件为空，请重新录音', 'system');
+            return;
+          }
+          
+          if (audioBlob.size < 1000) {
+            console.warn('录音文件过小，可能录音时间太短');
+            addMessage('录音时间太短，请重新录音', 'system');
+            return;
+          }
+          
           sendAudioToBackend(audioBlob);
         };
         
@@ -3017,9 +3347,20 @@
         
         // 创建FormData对象
         const formData = new FormData();
-        formData.append('file', audioBlob, 'recording.wav');
+        
+        // 根据音频格式设置正确的文件名
+        let fileName = 'recording.webm';
+        if (audioBlob.type.includes('mp4')) {
+          fileName = 'recording.mp4';
+        } else if (audioBlob.type.includes('wav')) {
+          fileName = 'recording.wav';
+        }
+        
+        formData.append('file', audioBlob, fileName);
         formData.append('model', 'whisper-1');
         formData.append('language', 'zh'); // 设置为中文
+        
+        console.log('发送音频文件:', fileName, '格式:', audioBlob.type, '大小:', audioBlob.size);
         
         // 调用OpenAI Whisper API
         const response = await fetch(`${openaiUrl}/audio/transcriptions`, {
@@ -3537,23 +3878,65 @@
       console.log('filterRoles 被调用，分类:', category);
       console.log('roleLibrary 总数:', roleLibrary.length);
       
-      const filteredRoles = category === 'all' 
+      // 获取当前搜索词
+      const searchInput = document.getElementById('librarySearch');
+      const searchTerm = searchInput ? searchInput.value.trim() : '';
+      
+      // 先按分类筛选
+      let filteredRoles = category === 'all' 
         ? roleLibrary 
         : roleLibrary.filter(role => role.category === category);
       
-      console.log('筛选后角色数量:', filteredRoles.length);
+      // 如果有搜索词，再按搜索词筛选
+      if (searchTerm) {
+        filteredRoles = filteredRoles.filter(role => 
+          role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      }
+      
+      console.log('筛选分类:', category, '搜索词:', searchTerm, '结果数量:', filteredRoles.length);
       renderRoleLibrary(filteredRoles);
     }
     
     // 角色库搜索功能
     function searchRoles(searchTerm) {
-      const filteredRoles = roleLibrary.filter(role => 
+      // 获取当前激活的筛选器
+      const activeFilter = document.querySelector('.filter-btn.active');
+      const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+      
+      // 先按分类筛选
+      let filteredRoles = category === 'all' 
+        ? roleLibrary 
+        : roleLibrary.filter(role => role.category === category);
+      
+      // 再按搜索词筛选
+      filteredRoles = filteredRoles.filter(role => 
         role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       
+      console.log('搜索词:', searchTerm, '筛选分类:', category, '结果数量:', filteredRoles.length);
       renderRoleLibrary(filteredRoles);
+    }
+    
+    // 触发搜索功能
+    function triggerSearch() {
+      const searchInput = document.getElementById('librarySearch');
+      if (searchInput) {
+        const searchTerm = searchInput.value.trim();
+        console.log('手动触发搜索:', searchTerm);
+        if (searchTerm === '') {
+          // 如果搜索框为空，显示当前筛选的所有角色
+          const activeFilter = document.querySelector('.filter-btn.active');
+          const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+          filterRoles(category);
+        } else {
+          searchRoles(searchTerm);
+        }
+      }
     }
     
     // 渲染历史对话列表
@@ -4275,6 +4658,7 @@
       // 角色库搜索事件
       const librarySearchInput = document.getElementById('librarySearch');
       if (librarySearchInput) {
+        // 输入事件 - 实时搜索
         librarySearchInput.addEventListener('input', function() {
           const searchTerm = this.value.trim();
           if (searchTerm === '') {
@@ -4284,6 +4668,23 @@
             filterRoles(category);
           } else {
             searchRoles(searchTerm);
+          }
+        });
+        
+        // 回车键事件 - 确认搜索
+        librarySearchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const searchTerm = this.value.trim();
+            console.log('回车搜索:', searchTerm);
+            if (searchTerm === '') {
+              // 如果搜索框为空，显示当前筛选的所有角色
+              const activeFilter = document.querySelector('.filter-btn.active');
+              const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+              filterRoles(category);
+            } else {
+              searchRoles(searchTerm);
+            }
           }
         });
       }
