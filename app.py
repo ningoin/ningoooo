@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
+# 导入数据管理器
+from data.data_manager import data_manager
+
 # 加载环境变量
 load_dotenv('config.env')
 
@@ -27,8 +30,8 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'your-openai-api-key')
 OPENAI_API_URL = os.getenv('OPENAI_API_URL', 'https://api.openai.com/v1')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
 
-# 存储对话的字典（生产环境建议使用Redis或数据库）
-conversations = {}
+# 注意：现在使用文件存储替代内存存储
+# conversations 和 custom_roles 变量已移除，改用 data_manager
 
 # 角色库数据（与前端保持一致）
 ROLE_LIBRARY = [
@@ -513,22 +516,10 @@ def chat_with_ai():
         # 如果没有提供conversation_id，创建新的对话
         if not conversation_id:
             conversation_id = str(uuid.uuid4())
-            conversations[conversation_id] = {
-                'user_id': user_id,
-                'character_name': character_name,
-                'character_description': character_description,
-                'messages': [],
-                'created_at': datetime.now().isoformat()
-            }
-        # 如果conversation_id不在conversations中，说明是无效的对话ID
-        elif conversation_id not in conversations:
-            conversations[conversation_id] = {
-                'user_id': user_id,
-                'character_name': character_name,
-                'character_description': character_description,
-                'messages': [],
-                'created_at': datetime.now().isoformat()
-            }
+            data_manager.save_conversation(conversation_id, user_id, character_name, character_description)
+        # 如果conversation_id不存在，创建新的对话
+        elif not data_manager.get_conversation(conversation_id):
+            data_manager.save_conversation(conversation_id, user_id, character_name, character_description)
         
         logger.info(f"处理用户消息: {user_message[:50]}... (对话ID: {conversation_id})")
         
@@ -541,16 +532,8 @@ def chat_with_ai():
         )
         
         # 保存对话历史
-        conversations[conversation_id]['messages'].append({
-            'role': 'user',
-            'content': user_message,
-            'timestamp': datetime.now().isoformat()
-        })
-        conversations[conversation_id]['messages'].append({
-            'role': 'assistant',
-            'content': ai_response,
-            'timestamp': datetime.now().isoformat()
-        })
+        data_manager.add_message_to_conversation(conversation_id, 'user', user_message)
+        data_manager.add_message_to_conversation(conversation_id, 'assistant', ai_response)
         
         return jsonify({
             'success': True,
@@ -673,19 +656,76 @@ def get_role_by_id(role_id):
     """
     根据角色ID获取角色信息
     """
+    # 先在预设角色库中查找
     for role in ROLE_LIBRARY:
         if role['id'] == role_id:
             return role
+    
+    # 再在自定义角色中查找
+    custom_role = data_manager.get_custom_role(role_id)
+    if custom_role:
+        return custom_role
+    
     return None
 
 def get_role_by_name(role_name):
     """
     根据角色名称获取角色信息
     """
+    # 先在预设角色库中查找
     for role in ROLE_LIBRARY:
         if role['name'] == role_name:
             return role
+    
+    # 再在自定义角色中查找
+    custom_roles_list = data_manager.get_all_custom_roles()
+    for role in custom_roles_list:
+        if role['name'] == role_name:
+            return role
+    
     return None
+
+def validate_role_data(role_data):
+    """
+    验证角色数据的完整性
+    """
+    required_fields = ['name', 'description', 'personality']
+    for field in required_fields:
+        if field not in role_data or not role_data[field].strip():
+            return False, f"缺少必填字段: {field}"
+    
+    # 验证字段长度
+    if len(role_data['name']) > 50:
+        return False, "角色名称不能超过50个字符"
+    
+    if len(role_data['description']) > 500:
+        return False, "角色描述不能超过500个字符"
+    
+    if len(role_data['personality']) > 200:
+        return False, "性格描述不能超过200个字符"
+    
+    return True, "验证通过"
+
+def generate_role_id(name):
+    """
+    根据角色名称生成唯一的角色ID
+    """
+    import hashlib
+    import time
+    
+    # 使用名称和时间戳生成唯一ID
+    timestamp = str(int(time.time()))
+    unique_string = f"{name}_{timestamp}"
+    role_id = hashlib.md5(unique_string.encode()).hexdigest()[:12]
+    
+    # 确保ID唯一性
+    custom_roles_list = data_manager.get_all_custom_roles()
+    while any(role['id'] == role_id for role in custom_roles_list) or any(role['id'] == role_id for role in ROLE_LIBRARY):
+        timestamp = str(int(time.time() * 1000))  # 使用毫秒时间戳
+        unique_string = f"{name}_{timestamp}"
+        role_id = hashlib.md5(unique_string.encode()).hexdigest()[:12]
+    
+    return role_id
 
 def call_openai_api(user_message, character_name, character_description, conversation_id):
     """
@@ -1443,9 +1483,10 @@ def call_openai_api(user_message, character_name, character_description, convers
         messages = [{"role": "system", "content": system_prompt}]
         
         # 添加对话历史（如果有的话）
-        if conversation_id in conversations and 'messages' in conversations[conversation_id]:
+        conversation = data_manager.get_conversation(conversation_id)
+        if conversation and 'messages' in conversation:
             # 只保留最近的10轮对话，避免token过多
-            recent_messages = conversations[conversation_id]['messages'][-20:]  # 10轮对话 = 20条消息
+            recent_messages = conversation['messages'][-20:]  # 10轮对话 = 20条消息
             for msg in recent_messages:
                 messages.append({
                     "role": msg['role'],
@@ -1505,10 +1546,28 @@ def get_characters():
     """
     获取可用的角色列表
     """
-    return jsonify({
-        'success': True,
-        'characters': ROLE_LIBRARY
-    })
+    try:
+        include_custom = request.args.get('include_custom', 'true').lower() == 'true'
+        
+        # 合并预设角色和自定义角色
+        all_characters = ROLE_LIBRARY.copy()
+        if include_custom:
+            custom_roles_list = data_manager.get_all_custom_roles()
+            all_characters.extend(custom_roles_list)
+        
+        return jsonify({
+            'success': True,
+            'characters': all_characters,
+            'total': len(all_characters),
+            'preset_count': len(ROLE_LIBRARY),
+            'custom_count': len(custom_roles_list) if include_custom else 0
+        })
+    except Exception as e:
+        logger.error(f"获取角色列表错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/characters/<role_id>', methods=['GET'])
 def get_character_by_id(role_id):
@@ -1543,12 +1602,19 @@ def search_characters():
     try:
         query = request.args.get('q', '').lower()
         category = request.args.get('category', '')
+        include_custom = request.args.get('include_custom', 'true').lower() == 'true'
         
-        filtered_roles = ROLE_LIBRARY
+        # 合并预设角色和自定义角色
+        all_roles = ROLE_LIBRARY.copy()
+        if include_custom:
+            custom_roles_list = data_manager.get_all_custom_roles()
+            all_roles.extend(custom_roles_list)
+        
+        filtered_roles = all_roles
         
         # 按分类筛选
         if category and category != 'all':
-            filtered_roles = [role for role in filtered_roles if role['category'] == category]
+            filtered_roles = [role for role in filtered_roles if role.get('category') == category]
         
         # 按关键词搜索
         if query:
@@ -1557,7 +1623,7 @@ def search_characters():
                 if (query in role['name'].lower() or
                     query in role['description'].lower() or
                     query in role['personality'].lower() or
-                    any(query in tag.lower() for tag in role['tags']))
+                    any(query in tag.lower() for tag in role.get('tags', [])))
             ]
         
         return jsonify({
@@ -1572,16 +1638,215 @@ def search_characters():
             'error': str(e)
         }), 500
 
+@app.route('/api/characters/custom', methods=['POST'])
+def create_custom_character():
+    """
+    创建自定义角色
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据格式错误'
+            }), 400
+        
+        # 验证必填字段
+        is_valid, error_msg = validate_role_data(data)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            }), 400
+        
+        # 检查角色名称是否已存在
+        existing_role = get_role_by_name(data['name'])
+        if existing_role:
+            return jsonify({
+                'success': False,
+                'error': '角色名称已存在'
+            }), 409
+        
+        # 生成角色ID
+        role_id = generate_role_id(data['name'])
+        
+        # 构建角色数据
+        custom_role = {
+            'id': role_id,
+            'name': data['name'].strip(),
+            'description': data['description'].strip(),
+            'personality': data['personality'].strip(),
+            'category': data.get('category', 'custom'),
+            'tags': data.get('tags', []),
+            'image': data.get('image', ''),
+            'is_custom': True,
+            'created_at': datetime.now().isoformat(),
+            'created_by': data.get('created_by', 'anonymous')
+        }
+        
+        # 保存自定义角色
+        saved_role = data_manager.save_custom_role(custom_role)
+        
+        logger.info(f"创建自定义角色成功: {custom_role['name']} (ID: {role_id})")
+        
+        return jsonify({
+            'success': True,
+            'character': saved_role,
+            'message': '角色创建成功'
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"创建自定义角色错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/characters/custom/<role_id>', methods=['PUT'])
+def update_custom_character(role_id):
+    """
+    更新自定义角色
+    """
+    try:
+        existing_role = data_manager.get_custom_role(role_id)
+        if not existing_role:
+            return jsonify({
+                'success': False,
+                'error': '自定义角色不存在'
+            }), 404
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据格式错误'
+            }), 400
+        
+        # 验证必填字段
+        is_valid, error_msg = validate_role_data(data)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            }), 400
+        
+        # 获取现有角色数据
+        existing_role = data_manager.get_custom_role(role_id)
+        if not existing_role:
+            return jsonify({
+                'success': False,
+                'error': '自定义角色不存在'
+            }), 404
+        
+        # 检查角色名称是否与其他角色冲突
+        if data['name'] != existing_role['name']:
+            existing_role_by_name = get_role_by_name(data['name'])
+            if existing_role_by_name:
+                return jsonify({
+                    'success': False,
+                    'error': '角色名称已存在'
+                }), 409
+        
+        # 更新角色数据
+        update_data = {
+            'name': data['name'].strip(),
+            'description': data['description'].strip(),
+            'personality': data['personality'].strip(),
+            'category': data.get('category', 'custom'),
+            'tags': data.get('tags', []),
+            'image': data.get('image', '')
+        }
+        
+        success = data_manager.update_custom_role(role_id, update_data)
+        if not success:
+            return jsonify({
+                'success': False,
+                'error': '更新角色失败'
+            }), 500
+        
+        updated_role = data_manager.get_custom_role(role_id)
+        logger.info(f"更新自定义角色成功: {updated_role['name']} (ID: {role_id})")
+        
+        return jsonify({
+            'success': True,
+            'character': updated_role,
+            'message': '角色更新成功'
+        })
+        
+    except Exception as e:
+        logger.error(f"更新自定义角色错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/characters/custom/<role_id>', methods=['DELETE'])
+def delete_custom_character(role_id):
+    """
+    删除自定义角色
+    """
+    try:
+        # 获取角色信息
+        role = data_manager.get_custom_role(role_id)
+        if not role:
+            return jsonify({
+                'success': False,
+                'error': '自定义角色不存在'
+            }), 404
+        
+        role_name = role['name']
+        success = data_manager.delete_custom_role(role_id)
+        
+        if not success:
+            return jsonify({
+                'success': False,
+                'error': '删除角色失败'
+            }), 500
+        
+        logger.info(f"删除自定义角色成功: {role_name} (ID: {role_id})")
+        
+        return jsonify({
+            'success': True,
+            'message': f'角色 "{role_name}" 已删除'
+        })
+        
+    except Exception as e:
+        logger.error(f"删除自定义角色错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/characters/custom', methods=['GET'])
+def get_custom_characters():
+    """
+    获取所有自定义角色
+    """
+    try:
+        custom_roles_list = data_manager.get_all_custom_roles()
+        return jsonify({
+            'success': True,
+            'characters': custom_roles_list,
+            'total': len(custom_roles_list)
+        })
+    except Exception as e:
+        logger.error(f"获取自定义角色错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/conversations', methods=['GET'])
 def get_conversations():
     """
     获取所有对话列表
     """
     try:
+        conversations_list = data_manager.get_all_conversations()
         return jsonify({
             'success': True,
-            'conversations': list(conversations.keys()),
-            'total': len(conversations)
+            'conversations': conversations_list,
+            'total': len(conversations_list)
         })
     except Exception as e:
         logger.error(f"获取对话列表错误: {str(e)}")
@@ -1596,8 +1861,8 @@ def delete_conversation(conversation_id):
     删除指定对话
     """
     try:
-        if conversation_id in conversations:
-            del conversations[conversation_id]
+        success = data_manager.delete_conversation(conversation_id)
+        if success:
             return jsonify({
                 'success': True,
                 'message': f'对话 {conversation_id} 已删除'
@@ -1622,10 +1887,11 @@ def get_character_conversations(character_name):
     try:
         # 查找该角色的所有对话
         character_conversations = []
-        for conv_id, conv_data in conversations.items():
+        all_conversations = data_manager.get_all_conversations()
+        for conv_data in all_conversations:
             if conv_data.get('character_name') == character_name:
                 character_conversations.append({
-                    'id': conv_id,
+                    'id': conv_data.get('id'),
                     'character_name': conv_data.get('character_name'),
                     'character_description': conv_data.get('character_description'),
                     'messages': conv_data.get('messages', []),
@@ -1660,14 +1926,18 @@ def health_check():
         'openai_api_url': OPENAI_API_URL,
         'openai_model': OPENAI_MODEL,
         'openai_api_key_configured': bool(OPENAI_API_KEY and OPENAI_API_KEY != 'your-openai-api-key'),
-        'active_conversations': len(conversations),
-        'total_roles': len(ROLE_LIBRARY),
+        'active_conversations': len(data_manager.get_all_conversations()),
+        'total_roles': len(ROLE_LIBRARY) + len(data_manager.get_all_custom_roles()),
+        'preset_roles': len(ROLE_LIBRARY),
+        'custom_roles': len(data_manager.get_all_custom_roles()),
         'features': {
             'voice_transcription': True,
             'role_management': True,
             'character_chat': True,
             'conversation_history': True,
-            'direct_openai_integration': True
+            'direct_openai_integration': True,
+            'custom_character_creation': True,
+            'custom_character_management': True
         }
     })
 
@@ -1687,6 +1957,10 @@ if __name__ == '__main__':
     print("  • GET  /api/characters - 获取角色列表")
     print("  • GET  /api/characters/<id> - 获取特定角色")
     print("  • GET  /api/characters/search - 搜索角色")
+    print("  • POST /api/characters/custom - 创建自定义角色")
+    print("  • GET  /api/characters/custom - 获取自定义角色列表")
+    print("  • PUT  /api/characters/custom/<id> - 更新自定义角色")
+    print("  • DELETE /api/characters/custom/<id> - 删除自定义角色")
     print("  • GET  /api/conversations - 获取对话列表")
     print("  • GET  /api/conversations/character/<name> - 获取特定角色对话历史")
     print("  • DELETE /api/conversations/<id> - 删除对话")

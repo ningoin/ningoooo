@@ -148,6 +148,48 @@
       color: #6b7280;
     }
     
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .create-role-btn, .manage-role-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .manage-role-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .create-role-btn:hover, .manage-role-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .create-role-btn:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .manage-role-btn:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .create-role-btn:active, .manage-role-btn:active {
+      transform: translateY(0);
+    }
+    
     .library-filters {
       display: flex;
       gap: 15px;
@@ -1233,6 +1275,83 @@
       color: #9ca3af;
     }
     
+    /* 通知弹窗样式 */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      min-width: 300px;
+      max-width: 400px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid #3b82f6;
+      animation: slideInRight 0.3s ease-out;
+    }
+    
+    .notification-success {
+      border-left-color: #10b981;
+    }
+    
+    .notification-error {
+      border-left-color: #ef4444;
+    }
+    
+    .notification-warning {
+      border-left-color: #f59e0b;
+    }
+    
+    .notification-info {
+      border-left-color: #3b82f6;
+    }
+    
+    .notification-content {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .notification-message {
+      font-size: 14px;
+      color: #374151;
+      flex: 1;
+      margin-right: 12px;
+    }
+    
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .notification-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
     /* 个人中心页面样式 */
     .profile-page {
       padding: 0;
@@ -1969,6 +2088,294 @@
       background: #3b82f6;
       animation-play-state: running;
     }
+    
+    /* 弹窗样式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 24px 0 24px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 24px;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .modal-form {
+      padding: 0 24px 24px 24px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .form-error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    
+    .form-hint {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn-primary, .btn-secondary {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+    
+    .modal-body {
+      padding: 0 24px 24px 24px;
+    }
+    
+    .custom-roles-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .custom-role-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #f9fafb;
+    }
+    
+    .custom-role-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+    }
+    
+    .custom-role-info {
+      flex: 1;
+    }
+    
+    .custom-role-name {
+      font-weight: 500;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    
+    .custom-role-description {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+    
+    .custom-role-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn-edit, .btn-delete {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-edit {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-edit:hover {
+      background: #2563eb;
+    }
+    
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-delete:hover {
+      background: #dc2626;
+    }
+    
+    /* 自定义角色样式 */
+    .custom-role {
+      border: 2px solid #667eea;
+      background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    }
+    
+    .custom-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+    
+    .delete-btn {
+      background: #ef4444 !important;
+      color: white !important;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+    
+    .delete-btn:hover {
+      background: #dc2626 !important;
+    }
+    
+    /* 首页角色选择按钮样式 */
+    .role-actions {
+      margin-left: auto;
+    }
+    
+    .role-select-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .role-select-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .role-select-btn:active {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -2043,6 +2450,12 @@
               <span>在线</span>
             </div>
           </div>
+          <div class="role-actions">
+            <button class="role-select-btn" onclick="switchPage('roleLibraryPage')" title="选择角色">
+              <iconify-icon icon="mdi:account-switch" style="font-size: 16px;"></iconify-icon>
+              <span>选择角色</span>
+            </button>
+          </div>
         </div>
         
         <div class="chat-messages" id="messages">
@@ -2100,6 +2513,16 @@
           <div class="library-header">
             <h1 class="library-title">角色库</h1>
             <p class="library-subtitle">选择你喜欢的AI角色，开始精彩的对话体验</p>
+            <div class="header-actions">
+              <button class="create-role-btn" onclick="openCreateRoleModal()">
+                <iconify-icon icon="mdi:plus" style="font-size: 18px; margin-right: 8px;"></iconify-icon>
+                创建自定义角色
+              </button>
+              <button class="manage-role-btn" onclick="openManageRoleModal()">
+                <iconify-icon icon="mdi:cog" style="font-size: 18px; margin-right: 8px;"></iconify-icon>
+                管理角色
+              </button>
+            </div>
           </div>
           
           <div class="library-filters">
@@ -2740,7 +3163,7 @@
     const volumeSlider = document.getElementById('volumeSlider');
     
     // 收藏数据
-    const favoriteRoles = [
+    let favoriteRoles = [
       {
         id: 'elf-mage',
         name: '精灵魔法师',
@@ -2770,7 +3193,7 @@
       }
     ];
     
-    const favoriteConversations = [
+    let favoriteConversations = [
       {
         id: 'conv_001',
         roleName: '精灵魔法师',
@@ -2814,7 +3237,7 @@
     ];
     
     // 历史对话数据
-    const conversationHistory = [
+    let conversationHistory = [
       {
         id: 'conv_001',
         roleName: '精灵魔法师',
@@ -2906,7 +3329,7 @@
     ];
     
     // 角色库数据
-    const roleLibrary = [
+    let roleLibrary = [
       {
         id: 'elf-mage',
         name: '精灵魔法师',
@@ -3520,7 +3943,9 @@
     // 获取可用角色列表
     async function loadCharacters() {
       try {
-        const response = await fetch('http://localhost:5000/api/characters');
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/characters`);
         const result = await response.json();
         
         if (result.success) {
@@ -3711,9 +4136,14 @@
     // 渲染角色库
     function renderRoleLibrary(filteredRoles = null) {
       const roleGrid = document.getElementById('roleGrid');
-      if (!roleGrid) return;
+      console.log('renderRoleLibrary 被调用，roleGrid:', roleGrid);
+      if (!roleGrid) {
+        console.log('roleGrid 元素未找到，无法渲染角色库');
+        return;
+      }
       
       const roles = filteredRoles || roleLibrary;
+      console.log('准备渲染角色，数量:', roles.length);
       
       if (roles.length === 0) {
         roleGrid.innerHTML = `
@@ -3726,11 +4156,14 @@
         return;
       }
       
-      roleGrid.innerHTML = roles.map(role => `
-        <div class="role-card-large" data-role-id="${role.id}">
+      const roleHTML = roles.map(role => `
+        <div class="role-card-large ${role.is_custom ? 'custom-role' : ''}" data-role-id="${role.id}">
           <img src="${role.image}" alt="${role.name}头像" class="role-image-large" loading="lazy">
           <div class="role-info-large">
-            <div class="role-name-large">${role.name}</div>
+            <div class="role-name-large">
+              ${role.name}
+              ${role.is_custom ? '<span class="custom-badge">自定义</span>' : ''}
+            </div>
             <div class="role-description">${role.description}</div>
             <div class="role-tags">
               ${role.tags.map(tag => `<span class="role-tag">${tag}</span>`).join('')}
@@ -3742,10 +4175,15 @@
               <button class="action-btn preview-btn" onclick="previewRole('${role.id}')">
                 预览
               </button>
+              ${role.is_custom ? `<button class="action-btn delete-btn" onclick="deleteCustomRole('${role.id}')" title="删除角色">删除</button>` : ''}
             </div>
           </div>
         </div>
       `).join('');
+      
+      console.log('生成的角色HTML长度:', roleHTML.length);
+      roleGrid.innerHTML = roleHTML;
+      console.log('角色库HTML已更新，当前roleGrid子元素数量:', roleGrid.children.length);
       
       // 绑定筛选器事件
       bindFilterEvents();
@@ -3753,10 +4191,23 @@
     
     // 从角色库选择角色
     async function selectRoleFromLibrary(roleId) {
+      console.log('=== 选择角色调试信息 ===');
+      console.log('角色ID:', roleId);
+      console.log('当前角色库:', roleLibrary);
+      
       const role = roleLibrary.find(r => r.id === roleId);
+      console.log('找到的角色:', role);
+      
       if (role) {
+        console.log('角色名称:', role.name);
+        console.log('角色图片:', role.image);
+        console.log('角色是否为自定义:', role.is_custom);
+        console.log('角色完整数据:', JSON.stringify(role, null, 2));
+        
         await selectRole(role.name, role.image);
         switchPage('chatPage');
+      } else {
+        console.error('未找到角色，ID:', roleId);
       }
     }
     
@@ -3770,17 +4221,32 @@
     
     // 角色选择功能
     async function selectRole(roleName, roleImage) {
+      console.log('=== selectRole 函数调试信息 ===');
       console.log(`开始切换到角色: "${roleName}"`);
+      console.log(`角色图片: "${roleImage}"`);
+      console.log(`角色图片类型: ${typeof roleImage}`);
+      console.log(`角色图片是否为空: ${!roleImage}`);
+      console.log(`角色图片是否为空字符串: ${roleImage === ''}`);
+      
       currentRole = roleName;
       roleTitle.textContent = roleName;
+      console.log(`当前角色已设置为: "${currentRole}"`);
+      console.log(`角色标题已更新为: "${roleTitle.textContent}"`);
       
       // 更新头像（如果有角色图片）
       const avatar = document.querySelector('.avatar');
-      if (roleImage) {
+      console.log('找到头像元素:', avatar);
+      if (roleImage && roleImage.trim() !== '') {
+        console.log('设置角色头像图片:', roleImage);
         avatar.innerHTML = `<img src="${roleImage}" alt="${roleName}头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        console.log('头像已更新为角色图片');
+      } else {
+        console.log('没有角色图片或图片为空，使用默认头像');
+        // 保持默认头像
       }
       
       // 更新左侧当前角色显示
+      console.log('更新左侧当前角色显示...');
       updateCurrentRoleDisplay(roleName, roleImage);
       
       // 清空当前对话
@@ -3799,24 +4265,41 @@
     
     // 更新左侧当前角色显示
     function updateCurrentRoleDisplay(roleName, roleImage) {
-      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
-      if (!currentRoleDisplay) return;
+      console.log('=== updateCurrentRoleDisplay 函数调试信息 ===');
+      console.log(`updateCurrentRoleDisplay 被调用: roleName="${roleName}", roleImage="${roleImage}"`);
+      console.log(`角色名称类型: ${typeof roleName}, 是否为空: ${!roleName}`);
+      console.log(`角色图片类型: ${typeof roleImage}, 是否为空: ${!roleImage}, 是否为空字符串: ${roleImage === ''}`);
       
-      if (roleName && roleImage) {
+      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
+      console.log('找到 currentRoleDisplay 元素:', currentRoleDisplay);
+      
+      if (!currentRoleDisplay) {
+        console.log('未找到 currentRoleDisplay 元素');
+        return;
+      }
+      
+      if (roleName && roleImage && roleImage.trim() !== '') {
+        console.log('更新为角色卡片显示');
+        console.log('角色图片URL:', roleImage);
         currentRoleDisplay.innerHTML = `
           <div class="current-role-card">
             <img src="${roleImage}" alt="${roleName}头像" class="current-role-image" loading="lazy">
             <div class="current-role-name">${roleName}</div>
           </div>
         `;
+        console.log('已设置角色卡片HTML');
       } else {
+        console.log('更新为占位符显示');
+        console.log('原因 - 角色名称:', roleName, '角色图片:', roleImage);
         currentRoleDisplay.innerHTML = `
           <div class="current-role-placeholder">
             <iconify-icon icon="mdi:account-circle" style="font-size: 80px; color: #cbd5e1;" aria-hidden="true"></iconify-icon>
             <div class="placeholder-text">未选择角色</div>
           </div>
         `;
+        console.log('已设置占位符HTML');
       }
+      console.log('currentRoleDisplay 更新完成');
     }
     
     // 清空当前对话
@@ -3835,7 +4318,9 @@
     async function loadCharacterConversationHistory(characterName) {
       try {
         console.log(`开始加载角色 "${characterName}" 的历史对话`);
-        const response = await fetch(`http://localhost:5000/api/conversations/character/${encodeURIComponent(characterName)}`);
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/conversations/character/${encodeURIComponent(characterName)}`);
         const data = await response.json();
         
         console.log(`角色 "${characterName}" 的历史对话数据:`, data);
@@ -4479,6 +4964,31 @@
       switchPage('notificationsPage');
     }
     
+    // 显示通知消息
+    function showNotification(message, type = 'info') {
+      console.log(`📢 通知 [${type}]: ${message}`);
+      
+      // 创建通知元素
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `
+        <div class="notification-content">
+          <span class="notification-message">${message}</span>
+          <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+      `;
+      
+      // 添加到页面
+      document.body.appendChild(notification);
+      
+      // 自动移除通知
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+    
     function showUserProfile() {
       switchPage('profilePage');
     }
@@ -4488,31 +4998,37 @@
     }
     
     // 事件监听器
-    recordBtn.addEventListener('click', function() {
-      if (isRecording) {
-        stopRecording();
-      } else {
-        startRecording();
-      }
-    });
+    if (recordBtn) {
+      recordBtn.addEventListener('click', function() {
+        if (isRecording) {
+          stopRecording();
+        } else {
+          startRecording();
+        }
+      });
+    }
     
     // TTS开关按钮事件监听器
-    ttsToggleBtn.addEventListener('click', function() {
-      ttsEnabled = !ttsEnabled;
-      this.setAttribute('aria-pressed', ttsEnabled);
-      
-      // 更新按钮图标和样式
-      const icon = this.querySelector('iconify-icon');
-      if (ttsEnabled) {
-        icon.setAttribute('icon', 'mdi:volume-high');
-        this.style.opacity = '1';
-        console.log('TTS已开启');
-      } else {
-        icon.setAttribute('icon', 'mdi:volume-off');
-        this.style.opacity = '0.5';
-        console.log('TTS已关闭');
-      }
-    });
+    if (ttsToggleBtn) {
+      ttsToggleBtn.addEventListener('click', function() {
+        ttsEnabled = !ttsEnabled;
+        this.setAttribute('aria-pressed', ttsEnabled);
+        
+        // 更新按钮图标和样式
+        const icon = this.querySelector('iconify-icon');
+        if (ttsEnabled) {
+          icon.setAttribute('icon', 'mdi:volume-high');
+          this.style.opacity = '1';
+          console.log('TTS已开启');
+        } else {
+          icon.setAttribute('icon', 'mdi:volume-off');
+          this.style.opacity = '0.5';
+          console.log('TTS已关闭');
+        }
+      });
+    } else {
+      console.log('TTS开关按钮元素未找到，跳过事件监听器绑定');
+    }
     
     // 音量滑块事件监听器
     if (volumeSlider) {
@@ -4530,15 +5046,19 @@
     const sendBtn = document.getElementById('sendBtn');
     
     // 发送按钮点击事件
-    sendBtn.addEventListener('click', sendMessage);
+    if (sendBtn) {
+      sendBtn.addEventListener('click', sendMessage);
+    }
     
     // 回车键发送消息
-    messageInput.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
-    });
+    if (messageInput) {
+      messageInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+    }
     
     // 发送消息函数
     async function sendMessage() {
@@ -4583,17 +5103,19 @@
     });
     
     // 搜索功能
-    const searchInput = document.querySelector('.search-input');
-    searchInput.addEventListener('input', function() {
+    const searchInput = document.querySelector('.library-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
       const searchTerm = this.value.toLowerCase();
       const roleCards = document.querySelectorAll('.role-card');
       
-      roleCards.forEach(card => {
-        const roleName = card.querySelector('.role-name').textContent.toLowerCase();
-        const isVisible = roleName.includes(searchTerm);
-        card.style.display = isVisible ? 'block' : 'none';
+        roleCards.forEach(card => {
+          const roleName = card.querySelector('.role-name').textContent.toLowerCase();
+          const isVisible = roleName.includes(searchTerm);
+          card.style.display = isVisible ? 'block' : 'none';
+        });
       });
-    });
+    }
     
     
     
@@ -4764,9 +5286,451 @@
       }
     });
     
+    // 自定义角色管理功能
+    let customRoles = [];
+    
+    // 打开创建角色弹窗
+    function openCreateRoleModal() {
+      document.getElementById('createRoleModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      // 确保表单事件已绑定
+      bindCreateRoleFormEvent();
+    }
+    
+    // 关闭创建角色弹窗
+    function closeCreateRoleModal() {
+      document.getElementById('createRoleModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      resetCreateRoleForm();
+    }
+    
+    // 重置创建角色表单
+    function resetCreateRoleForm() {
+      document.getElementById('createRoleForm').reset();
+      clearFormErrors();
+    }
+    
+    // 清除表单错误
+    function clearFormErrors() {
+      const errorElements = document.querySelectorAll('.form-error');
+      errorElements.forEach(element => {
+        element.style.display = 'none';
+        element.textContent = '';
+      });
+    }
+    
+    // 显示表单错误
+    function showFormError(fieldName, message) {
+      const errorElement = document.getElementById(fieldName + 'Error');
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+    }
+    
+    // 表单验证
+    function validateCreateRoleForm(formData) {
+      let isValid = true;
+      clearFormErrors();
+      
+      // 验证角色名称
+      if (!formData.name || formData.name.trim().length === 0) {
+        showFormError('name', '角色名称不能为空');
+        isValid = false;
+      } else if (formData.name.length > 50) {
+        showFormError('name', '角色名称不能超过50个字符');
+        isValid = false;
+      }
+      
+      // 验证角色描述
+      if (!formData.description || formData.description.trim().length === 0) {
+        showFormError('description', '角色描述不能为空');
+        isValid = false;
+      } else if (formData.description.length > 500) {
+        showFormError('description', '角色描述不能超过500个字符');
+        isValid = false;
+      }
+      
+      // 验证性格特点
+      if (!formData.personality || formData.personality.trim().length === 0) {
+        showFormError('personality', '性格特点不能为空');
+        isValid = false;
+      } else if (formData.personality.length > 200) {
+        showFormError('personality', '性格特点不能超过200个字符');
+        isValid = false;
+      }
+      
+      // 验证头像URL
+      if (formData.image && formData.image.trim().length > 0) {
+        try {
+          new URL(formData.image);
+        } catch (e) {
+          showFormError('image', '请输入有效的URL地址');
+          isValid = false;
+        }
+      }
+      
+      return isValid;
+    }
+    
+    // 创建自定义角色
+    async function createCustomRole(formData) {
+      console.log('=== 开始创建角色 ===');
+      console.log('createCustomRole 函数被调用');
+      console.log('传入的表单数据:', formData);
+      
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('后端URL:', backendUrl);
+        console.log('完整请求URL:', `${backendUrl}/api/characters/custom`);
+        console.log('准备发送POST请求...');
+        
+        const response = await fetch(`${backendUrl}/api/characters/custom`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        console.log('HTTP响应状态:', response.status);
+        console.log('HTTP响应状态文本:', response.statusText);
+        console.log('响应头:', response.headers);
+        
+        if (!response.ok) {
+          console.error('HTTP请求失败:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        console.log('开始解析响应JSON...');
+        const result = await response.json();
+        console.log('响应JSON解析完成:', result);
+        
+        if (result.success) {
+          // 创建成功
+          console.log('✅ 创建角色成功！');
+          console.log('返回数据:', result);
+          const newRole = result.character;
+          console.log('新角色数据:', newRole);
+          
+          console.log('准备关闭弹窗...');
+          closeCreateRoleModal();
+          console.log('弹窗已关闭');
+          
+          console.log('显示成功通知...');
+          showNotification(`角色创建成功！页面即将刷新...`, 'success');
+          console.log('成功通知已显示');
+          
+          // 延迟1秒后刷新页面，让用户看到成功提示
+          console.log('设置1秒后刷新页面...');
+          setTimeout(() => {
+            console.log('🔄 开始刷新页面...');
+            window.location.reload();
+          }, 1000);
+        } else {
+          // 创建失败 - 不关闭弹窗，让用户修改后重试
+          console.log('❌ 创建角色失败');
+          console.log('失败原因:', result.error);
+          showNotification(result.error || '创建角色失败', 'error');
+        }
+      } catch (error) {
+        console.error('❌ 创建角色过程中发生错误:');
+        console.error('错误类型:', error.name);
+        console.error('错误消息:', error.message);
+        console.error('错误堆栈:', error.stack);
+        console.error('完整错误对象:', error);
+        
+        showNotification(`创建角色失败: ${error.message}`, 'error');
+      }
+      
+      console.log('=== 创建角色函数执行完毕 ===');
+    }
+    
+    // 加载自定义角色列表
+    async function loadCustomRoles() {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/characters/custom`);
+        const result = await response.json();
+        
+        if (result.success) {
+          customRoles = result.characters;
+        } else {
+          console.error('加载自定义角色失败:', result.error);
+        }
+      } catch (error) {
+        console.error('加载自定义角色错误:', error);
+      }
+    }
+    
+    // 重新加载角色库（包含自定义角色）
+    async function loadRoleLibrary() {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('加载角色库，URL:', `${backendUrl}/api/characters?include_custom=true`);
+        const response = await fetch(`${backendUrl}/api/characters?include_custom=true`);
+        const result = await response.json();
+        console.log('角色库加载结果:', result);
+        
+        if (result.success) {
+          // 清空现有角色库
+          roleLibrary.length = 0;
+          // 添加所有角色（预设+自定义）
+          roleLibrary.push(...result.characters);
+          
+          console.log('角色库已更新，当前角色数量:', roleLibrary.length);
+          console.log('角色库内容:', roleLibrary);
+          
+          // 注意：不在这里渲染角色库，而是在页面切换后渲染
+          console.log('角色库数据已更新，等待页面切换后渲染');
+        } else {
+          console.error('加载角色库失败:', result.error);
+        }
+      } catch (error) {
+        console.error('加载角色库错误:', error);
+      }
+    }
+    
+    // 删除自定义角色
+    async function deleteCustomRole(roleId) {
+      if (!confirm('确定要删除这个角色吗？此操作不可撤销。')) {
+        return;
+      }
+      
+      try {
+        // 获取后端URL设置，与创建角色保持一致
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('删除角色 - 后端URL:', backendUrl);
+        console.log('删除角色 - 角色ID:', roleId);
+        console.log('删除角色 - 完整请求URL:', `${backendUrl}/api/characters/custom/${roleId}`);
+        
+        const response = await fetch(`${backendUrl}/api/characters/custom/${roleId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log('删除角色 - HTTP响应状态:', response.status);
+        
+        if (!response.ok) {
+          console.error('删除角色 - HTTP请求失败:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('删除角色 - 响应结果:', result);
+        
+        if (result.success) {
+          showNotification('角色删除成功！', 'success');
+          loadCustomRoles();
+          loadRoleLibrary();
+        } else {
+          showNotification(result.error || '删除角色失败', 'error');
+        }
+      } catch (error) {
+        console.error('删除角色错误:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+      }
+    }
+    
+    // 打开管理角色弹窗
+    function openManageRoleModal() {
+      document.getElementById('manageRoleModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      renderCustomRolesList();
+    }
+    
+    // 关闭管理角色弹窗
+    function closeManageRoleModal() {
+      document.getElementById('manageRoleModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    
+    // 渲染自定义角色列表
+    function renderCustomRolesList() {
+      const customRolesList = document.getElementById('customRolesList');
+      
+      if (customRoles.length === 0) {
+        customRolesList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎭</div>
+            <div class="empty-title">还没有自定义角色</div>
+            <div class="empty-subtitle">点击"创建自定义角色"开始创建你的第一个角色</div>
+          </div>
+        `;
+        return;
+      }
+      
+      customRolesList.innerHTML = customRoles.map(role => `
+        <div class="custom-role-item">
+          <img src="${role.image || 'https://via.placeholder.com/40x40/667eea/ffffff?text=' + encodeURIComponent(role.name.charAt(0))}" 
+               alt="${role.name}头像" class="custom-role-avatar">
+          <div class="custom-role-info">
+            <div class="custom-role-name">${role.name}</div>
+            <div class="custom-role-description">${role.description}</div>
+          </div>
+          <div class="custom-role-actions">
+            <button class="btn-edit" onclick="editCustomRole('${role.id}')">编辑</button>
+            <button class="btn-delete" onclick="deleteCustomRole('${role.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 编辑自定义角色（暂时只显示提示）
+    function editCustomRole(roleId) {
+      showNotification('编辑功能正在开发中...', 'info');
+    }
+    
+    // 绑定创建角色表单提交事件 - 使用事件委托确保元素存在时绑定
+    function bindCreateRoleFormEvent() {
+      const createRoleForm = document.getElementById('createRoleForm');
+      if (createRoleForm) {
+        // 移除之前的事件监听器（如果存在）
+        createRoleForm.removeEventListener('submit', handleCreateRoleSubmit);
+        // 添加新的事件监听器
+        createRoleForm.addEventListener('submit', handleCreateRoleSubmit);
+        console.log('创建角色表单事件已绑定');
+      } else {
+        console.log('创建角色表单元素未找到，将在稍后重试');
+        // 如果元素不存在，稍后重试
+        setTimeout(bindCreateRoleFormEvent, 100);
+      }
+    }
+    
+    // 创建角色表单提交处理函数
+    async function handleCreateRoleSubmit(e) {
+      console.log('=== 表单提交事件开始 ===');
+      e.preventDefault();
+      console.log('✅ 创建角色表单提交事件触发');
+      
+      // 收集表单数据
+      console.log('开始收集表单数据...');
+      const formData = {
+        name: document.getElementById('roleName').value.trim(),
+        description: document.getElementById('roleDescription').value.trim(),
+        personality: document.getElementById('rolePersonality').value.trim(),
+        category: document.getElementById('roleCategory').value,
+        tags: document.getElementById('roleTags').value.trim().split(',').map(tag => tag.trim()).filter(tag => tag),
+        image: document.getElementById('roleImage').value.trim(),
+        created_by: 'user_' + Date.now() // 临时用户ID
+      };
+      
+      console.log('📝 收集到的表单数据:', formData);
+      
+      // 验证表单
+      console.log('开始验证表单...');
+      const isValid = validateCreateRoleForm(formData);
+      console.log('表单验证结果:', isValid);
+      
+      if (isValid) {
+        console.log('✅ 表单验证通过，开始创建角色...');
+        await createCustomRole(formData);
+      } else {
+        console.log('❌ 表单验证失败，不执行创建操作');
+      }
+      
+      console.log('=== 表单提交事件结束 ===');
+    }
+    
+    // 页面加载完成后绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+      // 加载自定义角色
+      loadCustomRoles();
+      
+      // 绑定创建角色表单事件
+      bindCreateRoleFormEvent();
+    });
+    
     // 初始化
     console.log('AI角色扮演平台已加载完成');
     console.log('快捷键：空格键 - 开始/停止录音');
+    
+    // 页面加载完成后初始化角色库
+    loadRoleLibrary();
   </script>
+
+  <!-- 自定义角色创建弹窗 -->
+  <div id="createRoleModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">创建自定义角色</h2>
+        <button class="modal-close" onclick="closeCreateRoleModal()">
+          <iconify-icon icon="mdi:close" style="font-size: 20px;"></iconify-icon>
+        </button>
+      </div>
+      
+      <form id="createRoleForm" class="modal-form">
+        <div class="form-group">
+          <label for="roleName" class="form-label">角色名称 *</label>
+          <input type="text" id="roleName" name="name" class="form-input" placeholder="输入角色名称" maxlength="50" required>
+          <div class="form-error" id="nameError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleDescription" class="form-label">角色描述 *</label>
+          <textarea id="roleDescription" name="description" class="form-textarea" placeholder="描述角色的背景、特点等" maxlength="500" required></textarea>
+          <div class="form-error" id="descriptionError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="rolePersonality" class="form-label">性格特点 *</label>
+          <input type="text" id="rolePersonality" name="personality" class="form-input" placeholder="如：友善、幽默、专业" maxlength="200" required>
+          <div class="form-error" id="personalityError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleCategory" class="form-label">分类</label>
+          <select id="roleCategory" name="category" class="form-select">
+            <option value="custom">自定义</option>
+            <option value="assistant">助手</option>
+            <option value="companion">伙伴</option>
+            <option value="teacher">老师</option>
+            <option value="friend">朋友</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleTags" class="form-label">标签</label>
+          <input type="text" id="roleTags" name="tags" class="form-input" placeholder="用逗号分隔，如：友善,专业,幽默">
+          <div class="form-hint">标签将帮助其他用户发现你的角色</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleImage" class="form-label">头像URL</label>
+          <input type="url" id="roleImage" name="image" class="form-input" placeholder="https://example.com/avatar.jpg">
+          <div class="form-hint">可选，留空将使用默认头像</div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeCreateRoleModal()">取消</button>
+          <button type="submit" class="btn-primary">创建角色</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 自定义角色管理弹窗 -->
+  <div id="manageRoleModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">管理自定义角色</h2>
+        <button class="modal-close" onclick="closeManageRoleModal()">
+          <iconify-icon icon="mdi:close" style="font-size: 20px;"></iconify-icon>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div id="customRolesList" class="custom-roles-list">
+          <!-- 自定义角色列表将在这里动态生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
 
 </body></html>
