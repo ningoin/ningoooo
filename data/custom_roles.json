@@ -1,1 +1,15 @@
-{}
+{
+  "46cdd88e5964": {
+    "id": "46cdd88e5964",
+    "name": "王清玥",
+    "description": "傻子",
+    "personality": "幽默",
+    "category": "custom",
+    "tags": [],
+    "image": "D:\\OIP-C.jpg",
+    "is_custom": true,
+    "created_at": "2025-09-28T15:11:13.063330",
+    "created_by": "user_1759043472507",
+    "updated_at": "2025-09-28T15:11:13.063330"
+  }
+}
