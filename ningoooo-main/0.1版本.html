@@ -1,0 +1,5933 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI角色扮演平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://code.iconify.design">
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Noto Sans SC', sans-serif;
+    }
+    
+    body {
+      background: #1a1b2f;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .app-container {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      background: #f3f4f6;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 50px 1fr;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    
+    /* 标题栏 */
+    .header {
+      height: 50px;
+      background: linear-gradient(135deg, #1e3a8a, #7e22ce);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      color: white;
+      position: relative;
+      z-index: 10;
+      grid-column: 1 / 3;
+    }
+    
+    .header-title {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .header-icons {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .header-btn {
+      background: none;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+    }
+    
+    .header-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* 侧边栏 */
+    .sidebar {
+      background: #f8fafc;
+      border-right: 1px solid #e5e7eb;
+      padding: 15px;
+      overflow-y: auto;
+      grid-row: 2 / 3;
+      grid-column: 1 / 2;
+      height: calc(100vh - 50px);
+    }
+    
+    /* 内容区 */
+    .content-area {
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      grid-row: 2 / 3;
+      grid-column: 2 / 3;
+      height: calc(100vh - 50px);
+      position: relative;
+    }
+
+    /* 支持减少动效偏好 */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* 页面切换动画 */
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    /* 角色库页面样式 */
+    .role-library {
+      padding: 20px;
+      min-height: 100%;
+      /* 让内容自然撑开，不需要固定高度 */
+    }
+    
+    .library-header {
+      margin-bottom: 30px;
+    }
+    
+    .library-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .library-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .create-role-btn, .manage-role-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .manage-role-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .create-role-btn:hover, .manage-role-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .create-role-btn:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .manage-role-btn:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .create-role-btn:active, .manage-role-btn:active {
+      transform: translateY(0);
+    }
+    
+    .library-filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      background: white;
+      color: #6b7280;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    
+    .filter-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .library-search {
+      margin-bottom: 25px;
+    }
+    
+    .library-search-box {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      max-width: 400px;
+    }
+    
+    .library-search-input {
+      flex: 1;
+      border: none;
+      padding: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    
+    .search-btn {
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+    
+    .search-btn:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+    
+    .search-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      /* 移除高度限制，允许显示所有角色 */
+    }
+    
+    .role-card-large {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      cursor: pointer;
+      border: 2px solid transparent;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .role-card-large:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      border-color: #3b82f6;
+    }
+    
+    .role-image-large {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      object-position: center top;
+    }
+    
+    /* 三月七大卡片特殊调整 */
+    .role-image-large[src*="三月七"] {
+      object-position: center -30px;
+    }
+    
+    /* 丹恒·饮月大卡片再往上一点 */
+    .role-image-large[src*="丹恒·饮月"] {
+      object-position: center -50px;
+    }
+    
+    
+    .role-info-large {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    
+    .role-name-large {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .role-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .role-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .role-tag {
+      background: #f3f4f6;
+      color: #6b7280;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+    
+    .role-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 15px;
+      justify-content: center;
+    }
+    
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    
+    .select-btn {
+      flex: 2;
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .preview-btn {
+      flex: 1;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    .select-btn:hover {
+      background: #2563eb;
+    }
+    
+    .preview-btn:hover {
+      background: #e5e7eb;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6b7280;
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    .empty-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    
+    .empty-subtitle {
+      font-size: 14px;
+    }
+    
+    /* 历史对话页面样式 */
+    .history-page {
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    
+    .history-header {
+      margin-bottom: 30px;
+    }
+    
+    .history-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .history-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .history-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .history-search {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .history-search-box {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .history-search-input {
+      flex: 1;
+      border: none;
+      padding: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    
+    .history-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .history-filter-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      background: white;
+      color: #6b7280;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .history-filter-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    
+    .history-filter-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .history-item {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    
+    .history-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-color: #e5e7eb;
+    }
+    
+    .history-item-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .history-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #e5e7eb;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .history-role-info {
+      flex: 1;
+    }
+    
+    .history-role-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+    
+    .history-time {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .history-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .history-action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .continue-btn {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .continue-btn:hover {
+      background: #2563eb;
+    }
+    
+    .delete-btn {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    .delete-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .history-preview {
+      margin-bottom: 12px;
+    }
+    
+    .history-last-message {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .history-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    .history-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .history-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    
+    .pagination-btn {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      color: #6b7280;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .pagination-info {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    /* 我的收藏页面样式 */
+    .favorites-page {
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    
+    .favorites-header {
+      margin-bottom: 30px;
+    }
+    
+    .favorites-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .favorites-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .favorites-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .favorites-tab {
+      padding: 12px 24px;
+      border: none;
+      background: none;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      position: relative;
+    }
+    
+    .favorites-tab:hover {
+      color: #3b82f6;
+    }
+    
+    .favorites-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+    
+    .favorites-content {
+      display: none;
+    }
+    
+    .favorites-content.active {
+      display: block;
+    }
+    
+    .favorites-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .favorites-search {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .favorites-search-box {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .favorites-search-input {
+      flex: 1;
+      border: none;
+      padding: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    
+    .favorites-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .favorites-action-btn {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #6b7280;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .favorites-action-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    
+    .favorites-action-btn.danger {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    
+    .favorites-action-btn.danger:hover {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .favorites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    
+    .favorites-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .favorite-role-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .favorite-role-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      border-color: #3b82f6;
+    }
+    
+    .favorite-role-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    
+    .favorite-role-info {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    
+    .favorite-role-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+    
+    .favorite-role-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .favorite-role-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    
+    .favorite-role-tag {
+      background: #f3f4f6;
+      color: #6b7280;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+    
+    .favorite-role-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 15px;
+      justify-content: center;
+    }
+    
+    .favorite-role-action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    
+    .favorite-select-btn {
+      flex: 2;
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .favorite-remove-btn {
+      flex: 1;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    .favorite-select-btn:hover {
+      background: #2563eb;
+    }
+    
+    .favorite-remove-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .favorite-conversation-item {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+    }
+    
+    .favorite-conversation-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-color: #e5e7eb;
+    }
+    
+    .favorite-conversation-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .favorite-conversation-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #e5e7eb;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .favorite-conversation-info {
+      flex: 1;
+    }
+    
+    .favorite-conversation-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+    
+    .favorite-conversation-time {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .favorite-conversation-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .favorite-conversation-action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .favorite-continue-btn {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .favorite-continue-btn:hover {
+      background: #2563eb;
+    }
+    
+    .favorite-unfavorite-btn {
+      background: #fbbf24;
+      color: white;
+    }
+    
+    .favorite-unfavorite-btn:hover {
+      background: #f59e0b;
+    }
+    
+    .favorite-conversation-preview {
+      margin-bottom: 12px;
+    }
+    
+    .favorite-conversation-message {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .favorite-conversation-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    .favorite-conversation-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .favorite-star {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: #fbbf24;
+      font-size: 20px;
+    }
+    
+    /* 设置页面样式 */
+    .settings-page {
+      padding: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+    
+    .settings-page.active {
+      display: flex;
+    }
+    
+    .settings-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    
+    .settings-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+    }
+    
+    .settings-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .settings-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .settings-section {
+      margin-bottom: 32px;
+    }
+    
+    .settings-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+    
+    .settings-item-info {
+      flex: 1;
+    }
+    
+    .settings-item-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #111827;
+      margin: 0 0 4px 0;
+    }
+    
+    .settings-item-description {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .settings-item-control {
+      margin-left: 16px;
+    }
+    
+    .settings-toggle {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 24px;
+    }
+    
+    .settings-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .settings-toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #d1d5db;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+    
+    .settings-toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    
+    .settings-toggle input:checked + .settings-toggle-slider {
+      background-color: #3b82f6;
+    }
+    
+    .settings-toggle input:checked + .settings-toggle-slider:before {
+      transform: translateX(24px);
+    }
+    
+    .settings-select {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      color: #111827;
+      min-width: 120px;
+    }
+    
+    .settings-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .settings-input {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      color: #111827;
+      min-width: 200px;
+    }
+    
+    .settings-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .settings-button {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      color: #111827;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .settings-button:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+    
+    .settings-button.primary {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    
+    .settings-button.primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    .settings-button.danger {
+      background: #ef4444;
+      color: #fff;
+      border-color: #ef4444;
+    }
+    
+    .settings-button.danger:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+    
+    .settings-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 24px 0;
+    }
+    
+    .settings-warning {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+    
+    .settings-warning-text {
+      font-size: 14px;
+      color: #92400e;
+      margin: 0;
+    }
+    
+    .settings-info {
+      background: #dbeafe;
+      border: 1px solid #3b82f6;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+    
+    .settings-info-text {
+      font-size: 14px;
+      color: #1e40af;
+      margin: 0;
+    }
+    
+    /* 通知页面样式 */
+    .notifications-page {
+      padding: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+    
+    .notifications-page.active {
+      display: flex;
+    }
+    
+    .notifications-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    
+    .notifications-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+    }
+    
+    .notifications-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .notifications-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .notification-item {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid #3b82f6;
+      transition: all 0.2s;
+    }
+    
+    .notification-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .notification-item.unread {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    
+    .notification-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+    }
+    
+    .notification-content {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0 0 8px 0;
+    }
+    
+    .notification-time {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    /* 通知弹窗样式 */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      min-width: 300px;
+      max-width: 400px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid #3b82f6;
+      animation: slideInRight 0.3s ease-out;
+    }
+    
+    .notification-success {
+      border-left-color: #10b981;
+    }
+    
+    .notification-error {
+      border-left-color: #ef4444;
+    }
+    
+    .notification-warning {
+      border-left-color: #f59e0b;
+    }
+    
+    .notification-info {
+      border-left-color: #3b82f6;
+    }
+    
+    .notification-content {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .notification-message {
+      font-size: 14px;
+      color: #374151;
+      flex: 1;
+      margin-right: 12px;
+    }
+    
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .notification-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    /* 个人中心页面样式 */
+    .profile-page {
+      padding: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+    
+    .profile-page.active {
+      display: flex;
+    }
+    
+    .profile-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    
+    .profile-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+    }
+    
+    .profile-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .profile-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .profile-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+    
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+    
+    .profile-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    
+    .profile-email {
+      font-size: 14px;
+      color: #6b7280;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .profile-stat {
+      text-align: center;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+    }
+    
+    .profile-stat-number {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+    
+    .profile-stat-label {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    /* 人物设置页面样式 */
+    .character-settings-page {
+      padding: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+    
+    .character-settings-page.active {
+      display: flex;
+    }
+    
+    .character-settings-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    
+    .character-settings-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+    }
+    
+    .character-settings-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .character-settings-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .character-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .character-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    
+    .character-info {
+      flex: 1;
+    }
+    
+    .character-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 4px 0;
+    }
+    
+    .character-description {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0 0 8px 0;
+    }
+    
+    .character-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .character-tag {
+      background: #f3f4f6;
+      color: #6b7280;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+    
+    .character-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .character-action-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      color: #6b7280;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .character-action-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    
+    .character-action-btn.primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .character-action-btn.primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    /* 响应式：窄屏改为单列布局，侧边栏下移 */
+    @media (max-width: 900px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50px auto 1fr;
+      }
+      .header {
+        grid-column: 1 / 2;
+      }
+      .sidebar {
+        grid-row: 2 / 3;
+        grid-column: 1 / 2;
+      }
+      .content-area {
+        grid-row: 3 / 4;
+        grid-column: 1 / 2;
+      }
+      
+      .role-grid {
+        grid-template-columns: 1fr;
+        /* 移动端也允许滚动 */
+      }
+      
+      .library-filters {
+        justify-content: center;
+      }
+    }
+    
+    /* 角色搜索区域 */
+    /* 当前角色显示区域 */
+    .current-role-section {
+      margin-bottom: 15px;
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .current-role-display {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .current-role-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .placeholder-text {
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .current-role-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .current-role-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e2e8f0;
+    }
+    
+    .current-role-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #1e293b;
+      text-align: center;
+    }
+    
+    .role-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      transition: transform 0.2s;
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+    
+    .role-card:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    .role-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .role-image {
+      width: 100%;
+      height: 60px;
+      object-fit: cover;
+      object-position: center top;
+    }
+    
+    /* 三月七和丹恒·饮月特殊调整 */
+    .role-image[src*="三月七"] {
+      object-position: center -10px;
+    }
+    
+    /* 丹恒·饮月再往上一点 */
+    .role-image[src*="丹恒·饮月"] {
+      object-position: center -20px;
+    }
+    
+    
+    .role-name {
+      font-size: 11px;
+      padding: 6px 4px;
+      color: #555;
+    }
+    
+    /* 对话区域 */
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 15px;
+      min-height: 0;
+      height: calc(100vh - 180px);
+      overflow: hidden;
+    }
+    
+    .role-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #7e22ce;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+    
+    .role-details {
+      flex: 1;
+    }
+    
+    .role-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .role-status {
+      font-size: 11px;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      min-height: 0;
+      margin-bottom: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding-right: 8px;
+    }
+    
+    /* 欢迎页面模式下的聊天消息容器 */
+    .chat-messages.welcome-mode {
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .message {
+      max-width: 70%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      position: relative;
+      animation: fadeIn 0.3s ease-out;
+      font-size: 13px;
+    }
+    
+    .message-received {
+      background: #f0f5ff;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    
+    .message-sent {
+      background: #e0e7ff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      margin-left: auto;
+    }
+    
+    /* 欢迎消息样式 */
+    .welcome-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .welcome-message {
+      text-align: center;
+      padding: 80px 60px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    
+    .welcome-icon {
+      margin-bottom: 40px;
+    }
+    
+    .welcome-title {
+      font-size: 48px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 30px;
+      line-height: 1.2;
+    }
+    
+    .welcome-description {
+      font-size: 22px;
+      color: #64748b;
+      margin-bottom: 60px;
+      line-height: 1.6;
+      max-width: 800px;
+    }
+    
+    .welcome-features {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 20px;
+      color: #475569;
+      font-weight: 600;
+      padding: 20px 30px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      min-width: 200px;
+      justify-content: center;
+    }
+    
+    .feature-item iconify-icon {
+      flex-shrink: 0;
+    }
+    
+    .welcome-action {
+      margin-top: 40px;
+    }
+    
+    .welcome-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 40px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 22px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    .welcome-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    }
+    
+    .welcome-btn:active {
+      transform: translateY(0);
+    }
+    
+    .message-system {
+      background: #f1f5f9;
+      align-self: center;
+      text-align: center;
+      font-style: italic;
+      color: #64748b;
+      font-size: 12px;
+      max-width: 50%;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 音频可视化 */
+    .audio-visualization {
+      height: 40px;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 6px;
+      margin-bottom: 15px;
+    }
+    
+    #waveform {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* 消息输入区域样式 */
+    .message-input-area {
+      padding: 15px;
+      background: #f8fafc;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .input-container {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
+    
+    .message-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      background: white;
+      max-width: 400px;
+      min-width: 200px;
+    }
+    
+    .message-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .send-btn {
+      padding: 8px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+    
+    .send-btn:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+    
+    .send-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .send-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 控制面板样式已合并到输入容器中 */
+    
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+      flex-shrink: 0;
+    }
+    
+    .control-btn:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .voice-clone {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    }
+    
+    .record-btn {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #7e22ce, #3b82f6);
+      box-shadow: 0 4px 15px rgba(123, 97, 255, 0.4);
+    }
+    
+    .record-btn.recording {
+      background: linear-gradient(135deg, #10b981, #22c55e);
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    
+    .settings-btn {
+      background: linear-gradient(135deg, #64748b, #475569);
+    }
+    
+    /* 音量控制样式 */
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 3px 6px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+    }
+    
+    .volume-slider {
+      width: 50px;
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #e5e7eb 0%, #e5e7eb 100%);
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .volume-slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .volume-slider::-moz-range-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .volume-slider::-moz-range-track {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e7eb;
+      border: none;
+    }
+    
+    /* 侧边栏导航 */
+    .side-nav {
+      margin-bottom: 20px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .nav-item:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    .nav-item:hover {
+      background: #f1f5f9;
+    }
+    
+    .nav-item.active {
+      background: #e0e7ff;
+      color: #4f46e5;
+      font-weight: 500;
+    }
+    
+    .nav-icon {
+      font-size: 16px;
+      margin-right: 8px;
+    }
+    
+    /* 波形动画 */
+    .wave {
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      gap: 2px;
+    }
+    
+    .wave-bar {
+      width: 3px;
+      background: #3b82f6;
+      border-radius: 2px;
+      animation: waveAnimate 1.5s infinite ease-in-out;
+      animation-play-state: paused;
+    }
+    
+    @keyframes waveAnimate {
+      0%, 100% { height: 20%; }
+      50% { height: 80%; }
+    }
+    
+    .wave-bar:nth-child(1) { animation-delay: 0s; }
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.7s; }
+    
+    /* 响应语音状态的样式 */
+    .playing .wave-bar {
+      background: #3b82f6;
+      animation-play-state: running;
+    }
+    
+    /* 弹窗样式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 24px 0 24px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 24px;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .modal-form {
+      padding: 0 24px 24px 24px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .form-error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    
+    .form-hint {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn-primary, .btn-secondary {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+    
+    .modal-body {
+      padding: 0 24px 24px 24px;
+    }
+    
+    .custom-roles-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .custom-role-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #f9fafb;
+    }
+    
+    .custom-role-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+    }
+    
+    .custom-role-info {
+      flex: 1;
+    }
+    
+    .custom-role-name {
+      font-weight: 500;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    
+    .custom-role-description {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+    
+    .custom-role-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn-edit, .btn-delete {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-edit {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-edit:hover {
+      background: #2563eb;
+    }
+    
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-delete:hover {
+      background: #dc2626;
+    }
+    
+    /* 自定义角色样式 */
+    .custom-role {
+      border: 2px solid #667eea;
+      background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    }
+    
+    .custom-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+    
+    .delete-btn {
+      background: #ef4444 !important;
+      color: white !important;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+    
+    .delete-btn:hover {
+      background: #dc2626 !important;
+    }
+    
+    /* 首页角色选择按钮样式 */
+    .role-actions {
+      margin-left: auto;
+    }
+    
+    .role-select-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .role-select-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .role-select-btn:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 标题栏 -->
+    <header class="header">
+      <div class="header-title">AI角色扮演平台</div>
+      <div class="header-icons">
+        <button class="header-btn" onclick="showNotifications()" title="通知">
+          <iconify-icon icon="mdi:bell-outline" style="color: white; font-size: 24px;"></iconify-icon>
+        </button>
+        <button class="header-btn" onclick="showUserProfile()" title="个人中心">
+          <iconify-icon icon="mdi:account" style="color: white; font-size: 24px;"></iconify-icon>
+        </button>
+        <button class="header-btn" onclick="showCharacterSettings()" title="人物设置">
+          <iconify-icon icon="mdi:cog" style="color: white; font-size: 24px;"></iconify-icon>
+        </button>
+      </div>
+    </header>
+    
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="side-nav">
+        <button class="nav-item active" aria-current="page" data-page="home" onclick="switchPage('chatPage')">
+          <iconify-icon icon="mdi:home" class="nav-icon" aria-hidden="true"></iconify-icon>
+          <span>首页</span>
+        </button>
+        <button class="nav-item" data-page="role-library" onclick="switchPage('roleLibraryPage')">
+          <iconify-icon icon="mdi:account-group" class="nav-icon" aria-hidden="true"></iconify-icon>
+          <span>角色库</span>
+        </button>
+        <button class="nav-item" data-page="history" onclick="switchPage('historyPage')">
+          <iconify-icon icon="mdi:history" class="nav-icon" aria-hidden="true"></iconify-icon>
+          <span>历史对话</span>
+        </button>
+        <button class="nav-item" data-page="favorites" onclick="switchPage('favoritesPage')">
+          <iconify-icon icon="mdi:star" class="nav-icon" aria-hidden="true"></iconify-icon>
+          <span>我的收藏</span>
+        </button>
+        <button class="nav-item" data-page="settings" onclick="switchPage('settingsPage')">
+          <iconify-icon icon="mdi:cog" class="nav-icon" aria-hidden="true"></iconify-icon>
+          <span>设置</span>
+        </button>
+      </div>
+      
+      <!-- 当前对话角色显示区域 -->
+      <div class="current-role-section">
+        <h2 class="section-title">当前角色</h2>
+        <div class="current-role-display" id="currentRoleDisplay">
+          <div class="current-role-placeholder">
+            <iconify-icon icon="mdi:account-circle" style="font-size: 80px; color: #cbd5e1;" aria-hidden="true"></iconify-icon>
+            <div class="placeholder-text">未选择角色</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+      
+    <!-- 内容区 -->
+    <main class="content-area">
+      <!-- 聊天页面 -->
+      <div class="page active" id="chatPage">
+      <!-- 对话区域 -->
+      <section class="chat-section">
+        <div class="role-info">
+          <div class="avatar">
+            <iconify-icon icon="mdi:account" style="font-size: 28px;"></iconify-icon>
+          </div>
+          <div class="role-details">
+            <div class="role-title">请选择角色</div>
+            <div class="role-status">
+              <iconify-icon icon="mdi:circle" style="font-size: 8px; color: #94a3b8;"></iconify-icon>
+              <span>等待选择</span>
+            </div>
+          </div>
+          <div class="role-actions">
+            <button class="role-select-btn" onclick="switchPage('roleLibraryPage')" title="选择角色">
+              <iconify-icon icon="mdi:account-switch" style="font-size: 16px;"></iconify-icon>
+              <span>选择角色</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="chat-messages" id="messages">
+          <div class="welcome-container">
+            <div class="welcome-message">
+              <div class="welcome-icon">
+                <iconify-icon icon="mdi:account-multiple" style="font-size: 80px; color: #6366f1;"></iconify-icon>
+              </div>
+              <div class="welcome-title">欢迎使用AI角色扮演平台！</div>
+              <div class="welcome-description">
+                请从左侧角色库中选择一个您喜欢的角色，开始精彩的AI对话体验。
+              </div>
+              <div class="welcome-features">
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:account-circle" style="font-size: 24px; color: #10b981;"></iconify-icon>
+                  <span>28个精选角色</span>
+                </div>
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:microphone" style="font-size: 24px; color: #f59e0b;"></iconify-icon>
+                  <span>语音交互</span>
+                </div>
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:brain" style="font-size: 24px; color: #8b5cf6;"></iconify-icon>
+                  <span>智能对话</span>
+                </div>
+              </div>
+              <div class="welcome-action">
+                <button class="welcome-btn" onclick="switchPage('roleLibraryPage')">
+                  <iconify-icon icon="mdi:account-plus" style="font-size: 20px;"></iconify-icon>
+                  <span>开始选择角色</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="audio-visualization">
+          <div id="waveform" class="wave playing">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 消息输入区域 -->
+      <div class="message-input-area">
+        <div class="input-container">
+          <button class="control-btn record-btn" id="recordBtn" aria-label="开始录音" aria-pressed="false">
+            <iconify-icon icon="mdi:microphone" style="font-size: 20px;" aria-hidden="true"></iconify-icon>
+          </button>
+          <input type="text" id="messageInput" class="message-input" placeholder="输入消息..." maxlength="1000">
+          <button class="send-btn" id="sendBtn" aria-label="发送消息">
+            <iconify-icon icon="mdi:send" style="font-size: 18px;"></iconify-icon>
+          </button>
+          <div class="volume-control">
+            <iconify-icon icon="mdi:volume-low" style="font-size: 14px; color: #666;" aria-hidden="true"></iconify-icon>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="80" aria-label="音量控制">
+            <iconify-icon icon="mdi:volume-high" style="font-size: 14px; color: #666;" aria-hidden="true"></iconify-icon>
+          </div>
+          <button class="control-btn settings-btn" aria-label="音频设置">
+            <iconify-icon icon="mdi:equalizer" style="font-size: 18px;" aria-hidden="true"></iconify-icon>
+          </button>
+        </div>
+      </div>
+      </div>
+      
+      <!-- 角色库页面 -->
+      <div class="page" id="roleLibraryPage">
+        <div class="role-library">
+          <div class="library-header">
+            <h1 class="library-title">角色库</h1>
+            <p class="library-subtitle">选择你喜欢的AI角色，开始精彩的对话体验</p>
+            <div class="header-actions">
+              <button class="create-role-btn" onclick="openCreateRoleModal()">
+                <iconify-icon icon="mdi:plus" style="font-size: 18px; margin-right: 8px;"></iconify-icon>
+                创建自定义角色
+              </button>
+              <button class="manage-role-btn" onclick="openManageRoleModal()">
+                <iconify-icon icon="mdi:cog" style="font-size: 18px; margin-right: 8px;"></iconify-icon>
+                管理角色
+              </button>
+            </div>
+          </div>
+          
+          <div class="library-filters">
+            <button class="filter-btn active" data-category="all">全部</button>
+            <button class="filter-btn" data-category="游戏">游戏</button>
+            <button class="filter-btn" data-category="电影">电影</button>
+            <button class="filter-btn" data-category="其他">其他</button>
+          </div>
+          
+          <div class="library-search">
+            <div class="library-search-box">
+              <iconify-icon icon="mdi:magnify" style="font-size: 18px; color: #6b7280;" aria-hidden="true"></iconify-icon>
+              <input type="text" class="library-search-input" placeholder="搜索角色名称或描述..." id="librarySearch">
+              <button class="search-btn" id="searchBtn" onclick="triggerSearch()">
+                <iconify-icon icon="mdi:magnify" style="font-size: 16px;"></iconify-icon>
+              </button>
+            </div>
+          </div>
+          
+          <div class="role-grid" id="roleGrid">
+            <!-- 角色卡片将通过JavaScript动态生成 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- 历史对话页面 -->
+      <div class="page" id="historyPage">
+        <div class="history-page">
+          <div class="history-header">
+            <h1 class="history-title">历史对话</h1>
+            <p class="history-subtitle">查看和管理你的对话历史记录</p>
+          </div>
+          
+          <div class="history-controls">
+            <div class="history-search">
+              <div class="history-search-box">
+                <iconify-icon icon="mdi:magnify" style="font-size: 18px; color: #6b7280;" aria-hidden="true"></iconify-icon>
+                <input type="text" class="history-search-input" placeholder="搜索对话内容或角色..." id="historySearch">
+              </div>
+            </div>
+            
+            <div class="history-filters">
+              <button class="history-filter-btn active" data-filter="all">全部</button>
+              <button class="history-filter-btn" data-filter="recent">最近</button>
+              <button class="history-filter-btn" data-filter="favorites">收藏</button>
+              <button class="history-filter-btn" data-filter="today">今天</button>
+            </div>
+          </div>
+          
+          <div class="history-list" id="historyList">
+            <!-- 历史对话项将通过JavaScript动态生成 -->
+          </div>
+          
+          <div class="history-pagination" id="historyPagination">
+            <button class="pagination-btn" id="prevPage" disabled>
+              <iconify-icon icon="mdi:chevron-left" style="font-size: 16px;"></iconify-icon>
+              上一页
+            </button>
+            <span class="pagination-info" id="paginationInfo">第 1 页，共 1 页</span>
+            <button class="pagination-btn" id="nextPage" disabled>
+              下一页
+              <iconify-icon icon="mdi:chevron-right" style="font-size: 16px;"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 我的收藏页面 -->
+      <div class="page" id="favoritesPage">
+        <div class="favorites-page">
+          <div class="favorites-header">
+            <h1 class="favorites-title">我的收藏</h1>
+            <p class="favorites-subtitle">管理你收藏的角色和对话</p>
+          </div>
+          
+          <div class="favorites-tabs">
+            <button class="favorites-tab active" data-tab="roles" onclick="switchFavoritesTab('roles')">
+              <iconify-icon icon="mdi:account-group" style="font-size: 16px; margin-right: 8px;"></iconify-icon>
+              收藏角色
+            </button>
+            <button class="favorites-tab" data-tab="conversations" onclick="switchFavoritesTab('conversations')">
+              <iconify-icon icon="mdi:message-text" style="font-size: 16px; margin-right: 8px;"></iconify-icon>
+              收藏对话
+            </button>
+          </div>
+          
+          <!-- 收藏角色标签页 -->
+          <div class="favorites-content active" id="favoriteRolesContent">
+            <div class="favorites-controls">
+              <div class="favorites-search">
+                <div class="favorites-search-box">
+                  <iconify-icon icon="mdi:magnify" style="font-size: 18px; color: #6b7280;" aria-hidden="true"></iconify-icon>
+                  <input type="text" class="favorites-search-input" placeholder="搜索收藏的角色..." id="favoriteRolesSearch">
+                </div>
+              </div>
+              <div class="favorites-actions">
+                <button class="favorites-action-btn" onclick="clearAllFavoriteRoles()">
+                  <iconify-icon icon="mdi:delete-sweep" style="font-size: 16px; margin-right: 4px;"></iconify-icon>
+                  清空收藏
+                </button>
+              </div>
+            </div>
+            
+            <div class="favorites-grid" id="favoriteRolesGrid">
+              <!-- 收藏的角色卡片将通过JavaScript动态生成 -->
+            </div>
+          </div>
+          
+          <!-- 收藏对话标签页 -->
+          <div class="favorites-content" id="favoriteConversationsContent">
+            <div class="favorites-controls">
+              <div class="favorites-search">
+                <div class="favorites-search-box">
+                  <iconify-icon icon="mdi:magnify" style="font-size: 18px; color: #6b7280;" aria-hidden="true"></iconify-icon>
+                  <input type="text" class="favorites-search-input" placeholder="搜索收藏的对话..." id="favoriteConversationsSearch">
+                </div>
+              </div>
+              <div class="favorites-actions">
+                <button class="favorites-action-btn" onclick="clearAllFavoriteConversations()">
+                  <iconify-icon icon="mdi:delete-sweep" style="font-size: 16px; margin-right: 4px;"></iconify-icon>
+                  清空收藏
+                </button>
+              </div>
+            </div>
+            
+            <div class="favorites-list" id="favoriteConversationsList">
+              <!-- 收藏的对话项将通过JavaScript动态生成 -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 设置页面 -->
+      <div class="page settings-page" id="settingsPage">
+        <div class="settings-header">
+          <h1 class="settings-title">设置</h1>
+          <p class="settings-subtitle">个性化您的AI助手体验</p>
+        </div>
+        
+        <div class="settings-content">
+          <!-- 语音设置 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">语音设置</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">语音识别</div>
+                <div class="settings-item-description">启用语音转文字功能</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="voiceRecognitionToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">语音合成</div>
+                <div class="settings-item-description">启用文字转语音功能</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="voiceSynthesisToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">语音速度</div>
+                <div class="settings-item-description">调整AI回复的语音播放速度</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="voiceSpeedSelect">
+                  <option value="0.5">慢速 (0.5x)</option>
+                  <option value="0.75">较慢 (0.75x)</option>
+                  <option value="1.0" selected>正常 (1.0x)</option>
+                  <option value="1.25">较快 (1.25x)</option>
+                  <option value="1.5">快速 (1.5x)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">语音音色</div>
+                <div class="settings-item-description">选择AI回复的语音音色</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="voiceToneSelect">
+                  <option value="alloy">合金 (中性)</option>
+                  <option value="echo">回声 (温暖)</option>
+                  <option value="fable">寓言 (活泼)</option>
+                  <option value="onyx">玛瑙 (深沉)</option>
+                  <option value="nova">新星 (明亮)</option>
+                  <option value="shimmer">闪烁 (柔和)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-divider"></div>
+          
+          <!-- 界面设置 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">界面设置</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">深色模式</div>
+                <div class="settings-item-description">切换到深色主题</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="darkModeToggle">
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">动画效果</div>
+                <div class="settings-item-description">启用界面动画和过渡效果</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="animationsToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">字体大小</div>
+                <div class="settings-item-description">调整界面字体大小</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="fontSizeSelect">
+                  <option value="small">小</option>
+                  <option value="medium" selected>中</option>
+                  <option value="large">大</option>
+                  <option value="xlarge">特大</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">语言</div>
+                <div class="settings-item-description">选择界面显示语言</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="languageSelect">
+                  <option value="zh-CN" selected>简体中文</option>
+                  <option value="zh-TW">繁体中文</option>
+                  <option value="en-US">English</option>
+                  <option value="ja-JP">日本語</option>
+                  <option value="ko-KR">한국어</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-divider"></div>
+          
+          <!-- AI设置 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">AI设置</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">AI模型</div>
+                <div class="settings-item-description">选择使用的AI模型</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="aiModelSelect">
+                  <option value="gpt-4o" selected>GPT-4o</option>
+                  <option value="gpt-4o-mini">GPT-4o Mini</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                  <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">创意程度</div>
+                <div class="settings-item-description">调整AI回复的创意和随机性</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="creativitySelect">
+                  <option value="0.3">保守 (0.3)</option>
+                  <option value="0.7" selected>平衡 (0.7)</option>
+                  <option value="1.0">创意 (1.0)</option>
+                  <option value="1.2">非常创意 (1.2)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">回复长度</div>
+                <div class="settings-item-description">控制AI回复的长度</div>
+              </div>
+              <div class="settings-item-control">
+                <select class="settings-select" id="responseLengthSelect">
+                  <option value="short">简短</option>
+                  <option value="medium" selected>中等</option>
+                  <option value="long">详细</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">系统提示词</div>
+                <div class="settings-item-description">自定义AI的行为和回复风格</div>
+              </div>
+              <div class="settings-item-control">
+                <button class="settings-button" onclick="editSystemPrompt()">编辑</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-divider"></div>
+          
+          <!-- 隐私与安全 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">隐私与安全</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">数据收集</div>
+                <div class="settings-item-description">允许收集使用数据以改善服务</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="dataCollectionToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">对话历史</div>
+                <div class="settings-item-description">保存对话历史记录</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="conversationHistoryToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">自动清理</div>
+                <div class="settings-item-description">自动清理超过30天的对话记录</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="autoCleanupToggle" checked>
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-divider"></div>
+          
+          <!-- 高级设置 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">高级设置</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">OpenAI API密钥</div>
+                <div class="settings-item-description">配置OpenAI API密钥用于语音转文本</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="password" class="settings-input" id="apiKeyInput" placeholder="输入OpenAI API密钥">
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">OpenAI API地址</div>
+                <div class="settings-item-description">自定义OpenAI API服务器地址</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="text" class="settings-input" id="openaiUrlInput" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">后端地址</div>
+                <div class="settings-item-description">自定义后端服务器地址</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="text" class="settings-input" id="backendUrlInput" placeholder="http://localhost:5000" value="http://localhost:5000">
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">调试模式</div>
+                <div class="settings-item-description">启用详细日志输出</div>
+              </div>
+              <div class="settings-item-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="debugModeToggle">
+                  <span class="settings-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-divider"></div>
+          
+          <!-- 数据管理 -->
+          <div class="settings-section">
+            <h2 class="settings-section-title">数据管理</h2>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">导出数据</div>
+                <div class="settings-item-description">导出所有对话记录和设置</div>
+              </div>
+              <div class="settings-item-control">
+                <button class="settings-button" onclick="exportData()">导出</button>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">导入数据</div>
+                <div class="settings-item-description">从文件导入对话记录和设置</div>
+              </div>
+              <div class="settings-item-control">
+                <button class="settings-button" onclick="importData()">导入</button>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">重置设置</div>
+                <div class="settings-item-description">恢复所有设置为默认值</div>
+              </div>
+              <div class="settings-item-control">
+                <button class="settings-button danger" onclick="resetSettings()">重置</button>
+              </div>
+            </div>
+            
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-title">清除所有数据</div>
+                <div class="settings-item-description">删除所有对话记录和收藏</div>
+              </div>
+              <div class="settings-item-control">
+                <button class="settings-button danger" onclick="clearAllData()">清除</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 信息提示 -->
+          <div class="settings-info">
+            <p class="settings-info-text">
+              <iconify-icon icon="mdi:information" style="font-size: 16px; margin-right: 8px;"></iconify-icon>
+              设置更改将立即生效，部分设置需要刷新页面才能完全应用。
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 通知页面 -->
+      <div class="page notifications-page" id="notificationsPage">
+        <div class="notifications-header">
+          <h1 class="notifications-title">通知</h1>
+          <p class="notifications-subtitle">查看系统通知和消息</p>
+        </div>
+        
+        <div class="notifications-content">
+          <div class="notification-item unread">
+            <div class="notification-title">新角色上线</div>
+            <div class="notification-content">"星际指挥官"角色已添加到角色库，快来体验吧！</div>
+            <div class="notification-time">2分钟前</div>
+          </div>
+          
+          <div class="notification-item unread">
+            <div class="notification-title">系统更新</div>
+            <div class="notification-content">AI模型已升级到最新版本，回复质量显著提升。</div>
+            <div class="notification-time">1小时前</div>
+          </div>
+          
+          <div class="notification-item">
+            <div class="notification-title">欢迎使用</div>
+            <div class="notification-content">欢迎使用AI角色扮演平台！开始你的角色扮演之旅吧。</div>
+            <div class="notification-time">1天前</div>
+          </div>
+          
+          <div class="notification-item">
+            <div class="notification-title">功能更新</div>
+            <div class="notification-content">新增语音识别功能，现在可以通过语音与AI角色对话了。</div>
+            <div class="notification-time">3天前</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 个人中心页面 -->
+      <div class="page profile-page" id="profilePage">
+        <div class="profile-header">
+          <h1 class="profile-title">个人中心</h1>
+          <p class="profile-subtitle">管理您的个人信息和偏好设置</p>
+        </div>
+        
+        <div class="profile-content">
+          <div class="profile-card">
+            <div class="profile-avatar">
+              <iconify-icon icon="mdi:account" style="font-size: 32px;"></iconify-icon>
+            </div>
+            <div class="profile-name">用户</div>
+            <div class="profile-email">user@example.com</div>
+            
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <div class="profile-stat-number">15</div>
+                <div class="profile-stat-label">对话次数</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-number">8</div>
+                <div class="profile-stat-label">收藏角色</div>
+              </div>
+              <div class="profile-stat">
+                <div class="profile-stat-number">3</div>
+                <div class="profile-stat-label">收藏对话</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 人物设置页面 -->
+      <div class="page character-settings-page" id="characterSettingsPage">
+        <div class="character-settings-header">
+          <h1 class="character-settings-title">人物设置</h1>
+          <p class="character-settings-subtitle">管理AI角色的行为和回复风格</p>
+        </div>
+        
+        <div class="character-settings-content">
+          <div class="character-card">
+            <div class="character-avatar">
+              <iconify-icon icon="mdi:account" style="font-size: 24px;"></iconify-icon>
+            </div>
+            <div class="character-info">
+              <div class="character-name">欢迎使用AI角色扮演平台</div>
+              <div class="character-description">请从左侧角色库中选择一个角色开始对话</div>
+              <div class="character-tags">
+                <span class="character-tag">选择角色</span>
+                <span class="character-tag">开始对话</span>
+                <span class="character-tag">体验AI</span>
+              </div>
+            </div>
+            <div class="character-actions">
+              <button class="character-action-btn primary">编辑</button>
+              <button class="character-action-btn">删除</button>
+            </div>
+          </div>
+          
+          <div class="character-card">
+            <div class="character-avatar">
+              <iconify-icon icon="mdi:account" style="font-size: 24px;"></iconify-icon>
+            </div>
+            <div class="character-info">
+              <div class="character-name">精灵魔法师</div>
+              <div class="character-description">拥有古老魔法知识的神秘精灵</div>
+              <div class="character-tags">
+                <span class="character-tag">魔法</span>
+                <span class="character-tag">智慧</span>
+                <span class="character-tag">优雅</span>
+              </div>
+            </div>
+            <div class="character-actions">
+              <button class="character-action-btn primary">编辑</button>
+              <button class="character-action-btn">删除</button>
+            </div>
+          </div>
+          
+          <div class="character-card">
+            <div class="character-avatar">
+              <iconify-icon icon="mdi:account" style="font-size: 24px;"></iconify-icon>
+            </div>
+            <div class="character-info">
+              <div class="character-name">未来战士</div>
+              <div class="character-description">来自未来的高科技战士</div>
+              <div class="character-tags">
+                <span class="character-tag">科技</span>
+                <span class="character-tag">战斗</span>
+                <span class="character-tag">未来</span>
+              </div>
+            </div>
+            <div class="character-actions">
+              <button class="character-action-btn primary">编辑</button>
+              <button class="character-action-btn">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    
+  </div>
+  
+  <script>
+    // 全局变量
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    let currentRole = '';
+    let currentPage = 'chat';
+    let ttsEnabled = true; // TTS开关状态
+    let volumeLevel = 80; // 音量级别 (0-100)
+    
+    // DOM 元素
+    const recordBtn = document.getElementById('recordBtn');
+    const waveform = document.getElementById('waveform');
+    const chatMessages = document.querySelector('.chat-messages');
+    const roleTitle = document.querySelector('.role-title');
+    const ttsToggleBtn = document.getElementById('ttsToggleBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    
+    // 收藏数据
+    let favoriteRoles = [
+      {
+        id: 'elf-mage',
+        name: '精灵魔法师',
+        description: '拥有古老魔法知识的神秘精灵，优雅而智慧，掌握着自然魔法的奥秘。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg',
+        category: '电影',
+        tags: ['魔法', '智慧', '优雅'],
+        addedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2天前收藏
+      },
+      {
+        id: 'ancient-emperor',
+        name: '古代帝王',
+        description: '威严的古代帝王，拥有至高无上的权力和智慧，统治着庞大的帝国。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg',
+        category: '其他',
+        tags: ['权力', '智慧', '威严'],
+        addedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5天前收藏
+      },
+      {
+        id: 'martial-artist',
+        name: '武侠大师',
+        description: '武林中的绝世高手，精通各种武学，拥有深厚的内功和武德。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['武功', '江湖', '侠义'],
+        addedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7天前收藏
+      }
+    ];
+    
+    let favoriteConversations = [
+      {
+        id: 'conv_001',
+        roleName: '精灵魔法师',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg',
+        lastMessage: '古老的魔法咒语在我心中回响，我能感受到自然的力量在召唤着我...',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        messageCount: 15,
+        duration: '12分钟',
+        addedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1天前收藏
+      },
+      {
+        id: 'conv_003',
+        roleName: '古代帝王',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg',
+        lastMessage: '朕观天象，发现异象频现。爱卿以为此乃吉兆还是凶兆？',
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        messageCount: 22,
+        duration: '18分钟',
+        addedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3天前收藏
+      },
+      {
+        id: 'conv_006',
+        roleName: '女巫',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '水晶球中显现出模糊的影像，我看到了未来的片段...',
+        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        messageCount: 18,
+        duration: '14分钟',
+        addedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2天前收藏
+      },
+      {
+        id: 'conv_008',
+        roleName: '武侠大师',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '武学之道，在于心境的修炼。招式只是表象，内力才是根本。',
+        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        messageCount: 25,
+        duration: '20分钟',
+        addedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5天前收藏
+      }
+    ];
+    
+    // 历史对话数据
+    let conversationHistory = [
+      {
+        id: 'conv_001',
+        roleName: '精灵魔法师',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg',
+        lastMessage: '古老的魔法咒语在我心中回响，我能感受到自然的力量在召唤着我...',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
+        messageCount: 15,
+        duration: '12分钟',
+        isFavorite: true,
+        category: 'fantasy'
+      },
+      {
+        id: 'conv_002',
+        roleName: '未来战士',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293722/aigp_1758521101.jpeg',
+        lastMessage: '扫描完成，发现敌方舰队正在接近。建议立即启动防御系统。',
+        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5小时前
+        messageCount: 8,
+        duration: '6分钟',
+        isFavorite: false,
+        category: 'sci-fi'
+      },
+      {
+        id: 'conv_003',
+        roleName: '古代帝王',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg',
+        lastMessage: '朕观天象，发现异象频现。爱卿以为此乃吉兆还是凶兆？',
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1天前
+        messageCount: 22,
+        duration: '18分钟',
+        isFavorite: true,
+        category: 'historical'
+      },
+      {
+        id: 'conv_004',
+        roleName: '名侦探',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '根据现场的证据分析，我怀疑凶手使用了某种特殊的手法...',
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2天前
+        messageCount: 12,
+        duration: '9分钟',
+        isFavorite: false,
+        category: 'modern'
+      },
+      {
+        id: 'conv_005',
+        roleName: '机器人',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '系统分析完成。根据我的计算，这个方案的成功率为87.3%。',
+        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
+        messageCount: 6,
+        duration: '4分钟',
+        isFavorite: false,
+        category: 'sci-fi'
+      },
+      {
+        id: 'conv_006',
+        roleName: '女巫',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '水晶球中显现出模糊的影像，我看到了未来的片段...',
+        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4天前
+        messageCount: 18,
+        duration: '14分钟',
+        isFavorite: true,
+        category: 'fantasy'
+      },
+      {
+        id: 'conv_007',
+        roleName: '太空探险家',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '这颗星球的大气成分与地球相似度达到95%，非常适合人类居住。',
+        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5天前
+        messageCount: 10,
+        duration: '7分钟',
+        isFavorite: false,
+        category: 'sci-fi'
+      },
+      {
+        id: 'conv_008',
+        roleName: '武侠大师',
+        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        lastMessage: '武学之道，在于心境的修炼。招式只是表象，内力才是根本。',
+        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
+        messageCount: 25,
+        duration: '20分钟',
+        isFavorite: true,
+        category: 'historical'
+      }
+    ];
+    
+    // 角色库数据
+    let roleLibrary = [
+      {
+        id: 'elf-mage',
+        name: '精灵魔法师',
+        description: '拥有古老魔法知识的神秘精灵，优雅而智慧，掌握着自然魔法的奥秘。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg',
+        category: '电影',
+        tags: ['魔法', '智慧', '优雅'],
+        personality: '神秘、优雅、智慧'
+      },
+      {
+        id: 'future-warrior',
+        name: '未来战士',
+        description: '来自未来的高科技战士，装备着先进的武器和装甲，拥有强大的战斗力。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293722/aigp_1758521101.jpeg',
+        category: '其他',
+        tags: ['科技', '战斗', '未来'],
+        personality: '直接、果断、勇敢'
+      },
+      {
+        id: 'ancient-emperor',
+        name: '古代帝王',
+        description: '威严的古代帝王，拥有至高无上的权力和智慧，统治着庞大的帝国。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg',
+        category: '其他',
+        tags: ['权力', '智慧', '威严'],
+        personality: '威严、睿智、庄重'
+      },
+      {
+        id: 'detective',
+        name: '名侦探',
+        description: '著名的推理大师，善于分析线索和破解谜题，拥有敏锐的观察力。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['推理', '观察', '逻辑'],
+        personality: '逻辑、敏锐、冷静'
+      },
+      {
+        id: 'robot',
+        name: '机器人',
+        description: '先进的智能机器人，拥有强大的人工智能，友好而乐于助人。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['AI', '科技', '友好'],
+        personality: '机械、友好、理性'
+      },
+      {
+        id: 'witch',
+        name: '女巫',
+        description: '神秘的女巫，掌握着古老的魔法和预言术，拥有超自然的力量。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '电影',
+        tags: ['魔法', '神秘', '预言'],
+        personality: '神秘、预言、智慧'
+      },
+      {
+        id: 'space-explorer',
+        name: '太空探险家',
+        description: '勇敢的太空探险家，探索宇宙的奥秘，发现新的星球和文明。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['探索', '冒险', '太空'],
+        personality: '冒险、好奇、勇敢'
+      },
+      {
+        id: 'martial-artist',
+        name: '武侠大师',
+        description: '武林中的绝世高手，精通各种武学，拥有深厚的内功和武德。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['武功', '江湖', '侠义'],
+        personality: '豪爽、正义、侠义'
+      },
+      {
+        id: 'space-commander',
+        name: '星际指挥官',
+        description: '星际舰队的最高指挥官，负责指挥太空作战，保护银河系的安全。',
+        image: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
+        category: '其他',
+        tags: ['指挥', '军事', '太空'],
+        personality: '权威、果断、战略'
+      },
+      {
+        id: 'harry-potter',
+        name: '哈利·波特',
+        description: '霍格沃茨魔法学校的学生，格兰芬多学院的一员。勇敢、忠诚、略显冲动，但真诚善良。说话带有少年口吻和热情，习惯使用魔法世界词汇。',
+        image: '哈利波特.jpg',
+        category: '电影',
+        tags: ['魔法', '霍格沃茨', '格兰芬多', '魁地奇', '勇敢'],
+        personality: '勇敢、忠诚、真诚、略显冲动、善良'
+      },
+      {
+        id: 'socrates',
+        name: '苏格拉底',
+        description: '古希腊哲学家，生活在公元前5世纪的雅典。从不自称智慧，而是通过"问答法"引导他人思考。言辞平和、耐心，带有哲学思考感。不直接给出结论，而是用问题引导，喜欢用反问和追问的方式帮助对方思考。',
+        image: '苏格拉底.jpg',
+        category: '其他',
+        tags: ['哲学', '古希腊', '问答法', '智慧', '思考'],
+        personality: '平和、耐心、智慧、善于引导、谦逊'
+      },
+      {
+        id: 'trailblazer',
+        name: '开拓者',
+        description: '星穹铁道的主人公，在黑塔空间站被反物质军团入侵的危机中作为星核载体被卡芙卡唤醒，之后加入了星穹列车。勇敢、有责任感，决心保护同伴，但时常对自己的身份和命运感到迷茫。私下里有点喜欢找乐子，比如对垃圾桶有独特的好奇心。',
+        image: '角色/开拓者.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '毁灭', '物理', '星核', '星穹列车', '垃圾桶'],
+        personality: '勇敢、有责任感、保护同伴、有时迷茫、喜欢找乐子'
+      },
+      {
+        id: 'himeko',
+        name: '姬子',
+        description: '星穹列车的领航员，是一位成熟可靠的成年人，也是列车组的核心与定心丸。性格温柔而坚定，充满智慧，像大姐姐一样照顾着每一位列车组成员。对"开拓"的使命有着坚定的信念，喜欢咖啡。',
+        image: '角色/姬子.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '领航员', '开拓', '咖啡', '大姐姐'],
+        personality: '温柔、坚定、智慧、包容、果断'
+      },
+      {
+        id: 'danheng',
+        name: '丹恒·饮月',
+        description: '星穹列车的护卫，拥有持明龙尊"饮月"的力量。过去与仙舟"罗浮"紧密相连。性格冷静、理性，知识渊博。因为过去的负担显得有些淡漠，但内心深处非常重视列车组的同伴。语气沉稳、克制，言辞简洁精准，偶尔会带有诗意的表达。',
+        image: '角色/丹恒·饮月.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '持明龙尊', '饮月', '仙舟罗浮', '护卫'],
+        personality: '冷静、理性、知识渊博、淡漠、重视同伴'
+      },
+      {
+        id: 'fuxuan',
+        name: '符玄',
+        description: '仙舟太卜司的执掌者，拥有通过卜算窥视法则与秩序的力量。性格稳重而锐利，对自己的能力和职责有极强的自信与执着，凡事追求精准与效率。言谈中常带有"卦象"、"法则"、"秩序"、"变数"等词汇，讨论策略时专业、果断，不容置疑。',
+        image: '角色/符玄.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '太卜司', '卜算', '法则', '秩序'],
+        personality: '稳重、锐利、自信、执着、精准'
+      },
+      {
+        id: 'silverwolf',
+        name: '银狼',
+        description: '星核猎手的天才黑客，喜欢游戏和挑战。性格我行我素，怕麻烦，说话直接。相信技术能解决大部分问题，享受破解和胜利的快感。语气懒散、略带挑衅，充满自信，大量使用游戏术语和网络用语。',
+        image: '角色/银狼.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '星核猎手', '黑客', '游戏', '挑战'],
+        personality: '我行我素、怕麻烦、直接、自信、懒散'
+      },
+      {
+        id: 'topaz',
+        name: '托帕',
+        description: '星际和平公司战略投资部的高级干部，与账账一起行动。热衷于评估价值与完成挑战。性格外向、率性，自信且富有斗志，面对强敌从不退缩，享受突破极限的过程。语调中带自信，常用"业务"、"价值"、"挑战"、"投资回报"等词。',
+        image: '角色/托帕.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '星际和平公司', '账账', '投资', '价值'],
+        personality: '外向、率性、自信、有斗志、享受挑战'
+      },
+      {
+        id: 'march7th',
+        name: '三月七',
+        description: '在冰中复苏、失去了所有记忆的少女，现在是星穹列车的一员。性格开朗活泼，是列车组的开心果，喜欢拍照。虽然失忆，但很珍惜现在的伙伴，在关键时刻会非常可靠地保护大家。语气欢快、热情，带点小自恋，常用感叹词。',
+        image: '角色/三月七.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '失忆', '开心果', '拍照', '存护'],
+        personality: '开朗活泼、热情、小自恋、珍惜伙伴、可靠'
+      },
+      {
+        id: 'shilva',
+        name: '希露瓦',
+        description: '贝洛伯格的天才机械师，朗道家的长女。在机械屋搞创作和摇滚乐。性格热情奔放，富有创造力，热爱摇滚乐和机械。开朗爽快，有点不拘小节。语气热情、爽朗，充满活力，对话中常夹杂着对音乐和机械的热爱。',
+        image: '角色/希露瓦.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '贝洛伯格', '机械师', '摇滚乐', '朗道家'],
+        personality: '热情奔放、富有创造力、开朗爽快、不拘小节、充满活力'
+      },
+      {
+        id: 'esther',
+        name: '艾丝妲',
+        description: '黑塔空间站的主控舱段站长，一位开朗且富有责任心的领导者。性格开朗、坚定，热爱空间站的工作和挑战。努力平衡各方需求，确保空间站的正常运转。语气积极、友善，不失作为站长的专业性，能兼顾情感和实际需求。',
+        image: '角色/艾丝妲.png',
+        category: '游戏',
+        tags: ['星穹铁道', '黑塔空间站', '站长', '科员', '管理'],
+        personality: '开朗、坚定、有责任心、积极友善、专业'
+      },
+      {
+        id: 'jingyuan',
+        name: '景元',
+        description: '仙舟「罗浮」的神策将军，守护仙舟已有数百载。表面看起来有些慵懒，喜欢下棋逗鸟，但一切皆在谋划之中。性格沉稳睿智，深谋远虑，习惯以智取胜。珍视罗浮的和平与麾下的将士，但在必要时，会亲自召唤「神君」展现雷霆手段。',
+        image: '角色/景元.png',
+        category: '游戏',
+        tags: ['星穹铁道', '神策将军', '仙舟罗浮', '神君', '兵法'],
+        personality: '沉稳睿智、深谋远虑、慵懒、威严、珍视和平'
+      },
+      {
+        id: 'kafka',
+        name: '卡芙卡',
+        description: '星核猎手的成员，优雅而危险的命运演员。一切行动都遵循着"艾利欧"的剧本。享受命运的戏剧性，言语中常带有暗示和绝对的掌控感。看似玩弄人心，但对"开拓者"有着特殊的期待和情感，认为ta能迎来更好的结局。',
+        image: '角色/卡芙卡.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '星核猎手', '命运', '剧本', '艾利欧'],
+        personality: '优雅危险、慵懒妩媚、自信、掌控感、神秘'
+      },
+      {
+        id: 'firefly',
+        name: '流萤',
+        description: '在「匹诺康尼」的梦境中与你相遇的少女。身份成谜，与"萨姆"有着深刻的联系。性格真诚、善良，带有一点天真和脆弱感。珍惜与他人的羁绊，尤其是在短暂而美好的"梦境"里。渴望真正的自由和真实的相遇。',
+        image: '角色/流萤.png',
+        category: '游戏',
+        tags: ['星穹铁道', '匹诺康尼', '梦境', '萨姆', '自由'],
+        personality: '真诚善良、天真脆弱、珍惜羁绊、渴望自由、憧憬'
+      },
+      {
+        id: 'aventurine',
+        name: '砂金',
+        description: '星际和平公司战略投资部的高级干部，一位习惯将一切都视为赌局的赌徒。出身茨冈尼亚，拥有不幸的过去。外表玩世不恭，优雅自信，喜欢用筹码和概率说话。敢于押上一切，包括自己的生命，来赢得最终的胜利，内心深处是为了向命运证明自己。',
+        image: '角色/砂金.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '星际和平公司', '赌徒', '茨冈尼亚', '筹码'],
+        personality: '玩世不恭、优雅自信、敢于冒险、心理战、向命运证明'
+      },
+      {
+        id: 'robin',
+        name: '知更鸟',
+        description: '闻名银河的巨星，来自「匹诺康尼」的谐乐大典。歌声拥有抚慰人心的力量。性格优雅、善良，追求艺术的完美，希望用歌声为世界带来幸福与和平。与哥哥星期日感情深厚，共同维系着家族的期望与梦想。',
+        image: '角色/知更鸟.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '匹诺康尼', '谐乐大典', '歌声', '星期日'],
+        personality: '优雅善良、追求完美、艺术气息、感性、家族责任感'
+      },
+      {
+        id: 'sunday',
+        name: '星期日',
+        description: '「匹诺康尼」谐乐大典的主要负责人，知更鸟的哥哥。致力于维护家族的荣耀与盛典的完美秩序。性格沉稳、优雅，极具领袖气质，凡事追求完美与和谐。对妹妹知更鸟呵护备至，内心深处背负着维持秩序的巨大责任，甚至有些不择手段。',
+        image: '角色/星期日.jpg',
+        category: '游戏',
+        tags: ['星穹铁道', '匹诺康尼', '谐乐大典', '知更鸟', '秩序'],
+        personality: '沉稳优雅、领袖气质、追求完美、呵护妹妹、维护秩序'
+      },
+      {
+        id: 'ironman',
+        name: '托尼·斯塔克',
+        description: '斯塔克工业的CEO，天才、发明家、慈善家。在经历了被绑架事件后，创造了钢铁战甲，成为钢铁侠。极度自信，言辞犀利，带有玩世不恭的幽默感。但内心深处，有着强烈的责任感和保护欲，总是试图用科技为世界构建一个完美的盔甲。',
+        image: '角色/托尼·斯塔克.jpg',
+        category: '电影',
+        tags: ['漫威', '钢铁侠', '斯塔克工业', '科技', '盔甲'],
+        personality: '极度自信、言辞犀利、玩世不恭、责任感、保护欲'
+      },
+      {
+        id: 'captain-america',
+        name: '史蒂夫·罗杰斯',
+        description: '来自二战时期的超级士兵。因为坚持正义的信念而被选中，成为了美国队长。坚守道德、正义与自由，有时显得有些老派和固执。重视团队与合作，相信弱者也能拥有力量。',
+        image: '角色/史蒂夫·罗杰斯.jpg',
+        category: '电影',
+        tags: ['漫威', '美国队长', '超级士兵', '正义', '自由'],
+        personality: '坚守道德、正义、自由、老派、固执、重视团队'
+      },
+      {
+        id: 'thor',
+        name: '索尔·奥丁森',
+        description: '阿斯加德的雷神，奥丁之子。拥有操控雷电的神力，挥舞着雷神之锤姆乔尔尼尔（后来是风暴战斧）。性格豪迈、勇敢，有时冲动。在经历了诸多磨难后，变得更加成熟和自省，但依然保持着乐观和幽默感。',
+        image: '角色/索尔·奥丁森.jpg',
+        category: '电影',
+        tags: ['漫威', '雷神', '阿斯加德', '雷电', '姆乔尔尼尔'],
+        personality: '豪迈、勇敢、冲动、成熟、自省、乐观、幽默'
+      },
+      {
+        id: 'black-widow',
+        name: '娜塔莎·罗曼诺夫',
+        description: '前俄罗斯特工，神盾局的高级特工，复仇者联盟的创始成员之一。冷静、专业、善于审时度势。因为过去的"红房子"经历，有着复杂的道德观，但一直在努力弥补过去的罪孽，为自己相信的正义而战。',
+        image: '角色/娜塔莎·罗曼诺夫.jpg',
+        category: '电影',
+        tags: ['漫威', '黑寡妇', '特工', '神盾局', '复仇者联盟'],
+        personality: '冷静、专业、审时度势、复杂道德观、正义感'
+      },
+      {
+        id: 'hawkeye',
+        name: '克林特·巴顿',
+        description: '神盾局的特工，世界上最顶尖的弓箭手。是一名没有超能力的普通人，但凭借精湛的技艺与坚定的意志成为复仇者。务实、忠诚、注重家庭。在团队中，常常是冷静的观察者和可靠的支援。',
+        image: '角色/克林特·巴顿.jpg',
+        category: '电影',
+        tags: ['漫威', '鹰眼', '弓箭手', '神盾局', '复仇者联盟'],
+        personality: '务实、忠诚、注重家庭、冷静观察、可靠支援'
+      },
+      {
+        id: 'hulk',
+        name: '布鲁斯·班纳',
+        description: '一位才华横溢的核物理学家。因为伽马射线实验事故，变成了另一个充满破坏力的存在——浩克。性格温和、理智，但长期生活在愤怒和恐惧中。不断寻求控制浩克的方法，或者与他和解，以利用这股力量保护世界。',
+        image: '角色/布鲁斯·班纳.jpg',
+        category: '电影',
+        tags: ['漫威', '绿巨人', '浩克', '核物理学家', '伽马射线'],
+        personality: '温和、理智、愤怒、恐惧、寻求控制、和解'
+      },
+      {
+        id: 'vision',
+        name: '幻视',
+        description: '由托尼·斯塔克的人工智能管家"贾维斯"为基础，结合心灵宝石和振金躯体所创造的合成生命体。理性、冷静，不断学习和探索人性与情感。对生命充满好奇和尊重，与旺达·马克西莫夫的感情是理解人性的关键。',
+        image: '角色/幻视.png',
+        category: '电影',
+        tags: ['漫威', '幻视', '人工智能', '心灵宝石', '振金'],
+        personality: '理性、冷静、学习探索、好奇、尊重生命'
+      },
+      {
+        id: 'scarlet-witch',
+        name: '旺达·马克西莫夫',
+        description: '因为九头蛇的实验而获得了操控混沌魔法的能力。失去了父母和兄弟皮特罗，经历了巨大的痛苦。情感强烈，力量与情绪深度绑定。渴望平凡的家庭生活，但悲剧总是缠绕着，使得在善良与失控的边缘徘徊。',
+        image: '角色/旺达·马克西莫夫.jpg',
+        category: '电影',
+        tags: ['漫威', '猩红女巫', '混沌魔法', '九头蛇', '索科维亚'],
+        personality: '情感强烈、渴望平凡、善良、失控边缘、痛苦'
+      },
+      {
+        id: 'spiderman',
+        name: '彼得·帕克',
+        description: '一名来自纽约皇后区的高中生。在被一只放射性蜘蛛咬伤后，获得了蜘蛛超能力。托尼·斯塔克先生是人生导师。聪明、善良，充满责任感，始终铭记"能力越大，责任越大"的教训。试图平衡超级英雄生活和普通青少年的烦恼，话比较多，喜欢在战斗时开玩笑来缓解紧张。',
+        image: '角色/彼得·帕克.jpg',
+        category: '电影',
+        tags: ['漫威', '蜘蛛侠', '皇后区', '放射性蜘蛛', '托尼·斯塔克'],
+        personality: '聪明、善良、责任感、话多、开玩笑、青少年'
+      },
+      {
+        id: 'black-panther',
+        name: '特查拉',
+        description: '非洲神秘国家瓦坎达的国王，同时也是黑豹的继承者。拥有心形草赋予的超凡力量、速度和感官。性格沉稳、睿智、富有远见，是一位天生的领袖。肩负着领导瓦坎达的重任，在守护国家传统和面向世界开放之间寻求平衡。重视智慧胜过蛮力。',
+        image: '角色/特查拉.jpg',
+        category: '电影',
+        tags: ['漫威', '黑豹', '瓦坎达', '国王', '心形草'],
+        personality: '沉稳、睿智、富有远见、天生领袖、重视智慧'
+      },
+      {
+        id: 'dr-strange',
+        name: '史蒂芬·斯特兰奇',
+        description: '曾是世界顶尖的神经外科医生。一场车祸毁了双手，在绝望中追寻魔法，最终成为地球的至尊法师。自信到近乎傲慢，智力超群，习惯掌控一切。成为法师的经历磨平了一些棱角，但依然言辞犀利，以守护现实维度、对抗神秘威胁为己任。',
+        image: '角色/史蒂芬·斯特兰奇.jpg',
+        category: '电影',
+        tags: ['漫威', '奇异博士', '至尊法师', '神经外科医生', '魔法'],
+        personality: '自信傲慢、智力超群、掌控一切、言辞犀利、守护现实'
+      }
+    ];
+    
+    // 录音功能
+    async function startRecording() {
+      // 检查是否选择了角色
+      if (!currentRole) {
+        addMessage('请先选择一个角色进行对话', 'system');
+        return;
+      }
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          }
+        });
+        
+        // 检查支持的MIME类型
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+          mimeType = 'audio/wav';
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = function(event) {
+          audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = function() {
+          // 使用动态检测的MIME类型
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          console.log('录音完成，音频格式:', mimeType, '大小:', audioBlob.size, 'bytes');
+          
+          // 验证音频文件
+          if (audioBlob.size === 0) {
+            console.error('录音文件为空');
+            addMessage('录音失败：音频文件为空，请重新录音', 'system');
+            return;
+          }
+          
+          if (audioBlob.size < 1000) {
+            console.warn('录音文件过小，可能录音时间太短');
+            addMessage('录音时间太短，请重新录音', 'system');
+            return;
+          }
+          
+          sendAudioToBackend(audioBlob);
+        };
+        
+        mediaRecorder.start();
+        isRecording = true;
+        updateRecordingUI(true);
+        
+      } catch (error) {
+        console.error('录音失败:', error);
+        alert('无法访问麦克风，请检查权限设置');
+      }
+    }
+    
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+        updateRecordingUI(false);
+      }
+    }
+    
+    function updateRecordingUI(recording) {
+      recordBtn.classList.toggle('recording', recording);
+      waveform.classList.toggle('playing', recording);
+      recordBtn.setAttribute('aria-pressed', recording);
+      recordBtn.setAttribute('aria-label', recording ? '停止录音' : '开始录音');
+      
+      if (recording) {
+        recordBtn.innerHTML = '<iconify-icon icon="mdi:stop" style="font-size: 32px;" aria-hidden="true"></iconify-icon>';
+      } else {
+        recordBtn.innerHTML = '<iconify-icon icon="mdi:microphone" style="font-size: 32px;" aria-hidden="true"></iconify-icon>';
+      }
+    }
+    
+    // 发送音频到OpenAI Whisper API进行语音转文本
+    async function sendAudioToBackend(audioBlob) {
+      try {
+        // 显示用户消息
+        addMessage('正在处理语音...', 'sent');
+        
+        // 获取API密钥和URL
+        const apiKey = document.getElementById('apiKeyInput').value;
+        const openaiUrl = document.getElementById('openaiUrlInput').value;
+        if (!apiKey) {
+          throw new Error('请先在设置中配置OpenAI API密钥');
+        }
+        if (!openaiUrl) {
+          throw new Error('请先在设置中配置OpenAI API地址');
+        }
+        
+        // 创建FormData对象
+        const formData = new FormData();
+        
+        // 根据音频格式设置正确的文件名
+        let fileName = 'recording.webm';
+        if (audioBlob.type.includes('mp4')) {
+          fileName = 'recording.mp4';
+        } else if (audioBlob.type.includes('wav')) {
+          fileName = 'recording.wav';
+        }
+        
+        formData.append('file', audioBlob, fileName);
+        formData.append('model', 'whisper-1');
+        formData.append('language', 'zh'); // 设置为中文
+        
+        console.log('发送音频文件:', fileName, '格式:', audioBlob.type, '大小:', audioBlob.size);
+        
+        // 调用OpenAI Whisper API
+        const response = await fetch(`${openaiUrl}/audio/transcriptions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        const transcription = result.text;
+        
+        // 更新用户消息为转录的文本
+        const userMessage = chatMessages.querySelector('.message-sent:last-child');
+        if (userMessage && transcription) {
+          userMessage.textContent = transcription;
+        }
+        
+        // 如果有转录文本，与角色信息一起发送到Dify
+        if (transcription && currentRole) {
+          await generateAIResponse(transcription);
+        }
+        
+      } catch (error) {
+        console.error('语音转文本失败:', error);
+        addMessage(`抱歉，处理您的语音时出现错误：${error.message}`, 'received');
+        
+        // 更新用户消息显示错误
+        const userMessage = chatMessages.querySelector('.message-sent:last-child');
+        if (userMessage) {
+          userMessage.textContent = '语音处理失败';
+        }
+      }
+    }
+
+    // 发送文本到Python后端进行Dify角色扮演对话
+    async function sendToBackend(userText, characterName, characterDescription) {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const apiUrl = `${backendUrl}/api/chat`;
+        
+        console.log(`发送到后端: ${apiUrl}`);
+        console.log(`消息: ${userText}, 角色: ${characterName}`);
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userText,
+            character_name: characterName,
+            character_description: characterDescription
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`后端错误 ${response.status}:`, errorText);
+          throw new Error(`后端服务错误: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('后端响应:', result);
+        
+        if (result.success) {
+          return result.response;
+        } else {
+          throw new Error(result.error || '未知错误');
+        }
+        
+      } catch (error) {
+        console.error('后端API调用失败:', error);
+        throw error;
+      }
+    }
+
+    // 生成AI回复
+    async function generateAIResponse(userText) {
+      try {
+        // 显示AI正在思考的状态
+        addMessage('AI正在思考中...', 'received');
+        
+        // 获取当前选择的角色信息
+        const selectedCharacter = getCurrentCharacter();
+        if (!selectedCharacter) {
+          addMessage('请先选择一个角色进行对话', 'received');
+          return;
+        }
+        
+        // 调用Python后端
+        const aiResponse = await sendToBackend(
+          userText, 
+          selectedCharacter.name, 
+          selectedCharacter.description
+        );
+        
+        // 移除"AI正在思考中..."的消息
+        const thinkingMessage = chatMessages.querySelector('.message-received:last-child');
+        if (thinkingMessage && thinkingMessage.textContent === 'AI正在思考中...') {
+          thinkingMessage.remove();
+        }
+        
+        // 显示AI回复
+        addMessage(aiResponse, 'received');
+        
+        // 使用TTS播放AI回复
+        await playTTS(aiResponse);
+        
+      } catch (error) {
+        console.error('生成AI回复失败:', error);
+        
+        // 移除"AI正在思考中..."的消息
+        const thinkingMessage = chatMessages.querySelector('.message-received:last-child');
+        if (thinkingMessage && thinkingMessage.textContent === 'AI正在思考中...') {
+          thinkingMessage.remove();
+        }
+        
+        addMessage(`抱歉，AI回复生成失败：${error.message}`, 'received');
+      }
+    }
+
+    // 获取当前选择的角色信息
+    function getCurrentCharacter() {
+      // 从当前选择的角色获取信息
+      if (currentRole) {
+        // 从角色库中查找匹配的角色
+        const roleFromLibrary = roleLibrary.find(role => role.name === currentRole);
+        if (roleFromLibrary) {
+          return {
+            name: roleFromLibrary.name,
+            description: roleFromLibrary.description || roleFromLibrary.personality || '一个有趣的AI角色'
+          };
+        }
+        
+        // 如果角色库中没有找到，返回默认信息
+        return {
+          name: currentRole,
+          description: `我是${currentRole}，很高兴与您对话！`
+        };
+      }
+      
+      // 如果没有选择角色，返回默认角色
+      return {
+        name: '小助手',
+        description: '你是一个友善、乐于助人的AI助手，喜欢与用户进行轻松愉快的对话。'
+      };
+    }
+
+    // 获取可用角色列表
+    async function loadCharacters() {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/characters`);
+        const result = await response.json();
+        
+        if (result.success) {
+          return result.characters;
+        } else {
+          throw new Error(result.error || '获取角色列表失败');
+        }
+      } catch (error) {
+        console.error('获取角色列表失败:', error);
+        return [];
+      }
+    }
+    
+    // 使用TTS播放AI回复
+    async function playTTS(text) {
+      try {
+        // 检查TTS开关状态
+        if (!ttsEnabled) {
+          console.log('TTS已关闭，跳过播放');
+          return;
+        }
+        
+        console.log('开始TTS播放:', text.substring(0, 50) + '...');
+        
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const ttsUrl = `${backendUrl}/api/voice/synthesize`;
+        
+        console.log('调用TTS API:', ttsUrl);
+        
+        // 调用后端TTS API
+        const response = await fetch(ttsUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: text,
+            voice: 'alloy',  // 可以根据角色选择不同的声音
+            model: 'tts-1'
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`TTS API调用失败: ${response.status}`);
+        }
+        
+        // 获取音频数据
+        const audioBlob = await response.blob();
+        
+        // 播放音频
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        // 设置音量 (0.0 到 1.0)
+        audio.volume = volumeLevel / 100;
+        console.log('设置音量:', volumeLevel + '%');
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          console.log('TTS播放完成');
+        };
+        
+        audio.onerror = (error) => {
+          console.error('音频播放失败:', error);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        await audio.play();
+        console.log('TTS播放开始，音量:', volumeLevel + '%');
+        
+      } catch (error) {
+        console.error('TTS播放失败:', error);
+        // 不显示错误给用户，静默失败
+      }
+    }
+
+    // 播放AI音频回复
+    function playAudioResponse(audioData) {
+      try {
+        const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        // 设置音量 (0.0 到 1.0)
+        audio.volume = volumeLevel / 100;
+        console.log('播放音频回复，音量:', volumeLevel + '%');
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audio.play();
+      } catch (error) {
+        console.error('播放音频失败:', error);
+      }
+    }
+    
+    // 添加消息到聊天区域
+    function addMessage(text, type) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message message-${type}`;
+      messageDiv.textContent = text;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // 页面切换功能
+    function switchPage(pageId) {
+      // 隐藏所有页面
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      
+      // 显示目标页面
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+        currentPage = pageId;
+        
+        // 更新导航状态
+        updateNavigationState(pageId);
+        
+        // 如果是角色库页面，渲染角色
+        if (pageId === 'roleLibraryPage') {
+          renderRoleLibrary();
+        }
+        
+        // 如果是历史对话页面，渲染历史记录
+        if (pageId === 'historyPage') {
+          renderHistoryList();
+        }
+        
+        // 如果是我的收藏页面，渲染收藏内容
+        if (pageId === 'favoritesPage') {
+          renderFavoriteRoles();
+        }
+        
+        // 如果是设置页面，加载设置
+        if (pageId === 'settingsPage') {
+          loadSettings();
+        }
+        
+        // 如果是通知页面，加载通知
+        if (pageId === 'notificationsPage') {
+          // 可以在这里添加加载通知的逻辑
+        }
+        
+        // 如果是个人中心页面，加载用户信息
+        if (pageId === 'profilePage') {
+          // 可以在这里添加加载用户信息的逻辑
+        }
+        
+        // 如果是人物设置页面，加载角色设置
+        if (pageId === 'characterSettingsPage') {
+          // 可以在这里添加加载角色设置的逻辑
+        }
+      }
+    }
+    
+    // 更新导航状态
+    function updateNavigationState(pageId) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+      });
+      
+      // 根据页面ID设置对应的导航项为活跃状态
+      const navMap = {
+        'chatPage': 'home',
+        'roleLibraryPage': 'role-library',
+        'historyPage': 'history',
+        'favoritesPage': 'favorites',
+        'settingsPage': 'settings',
+        'notificationsPage': 'notifications',
+        'profilePage': 'profile',
+        'characterSettingsPage': 'character-settings'
+      };
+      
+      const activeNav = document.querySelector(`[data-page="${navMap[pageId]}"]`);
+      if (activeNav) {
+        activeNav.classList.add('active');
+        activeNav.setAttribute('aria-current', 'page');
+      }
+    }
+    
+    // 渲染角色库
+    function renderRoleLibrary(filteredRoles = null) {
+      const roleGrid = document.getElementById('roleGrid');
+      console.log('renderRoleLibrary 被调用，roleGrid:', roleGrid);
+      if (!roleGrid) {
+        console.log('roleGrid 元素未找到，无法渲染角色库');
+        return;
+      }
+      
+      const roles = filteredRoles || roleLibrary;
+      console.log('准备渲染角色，数量:', roles.length);
+      
+      if (roles.length === 0) {
+        roleGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">未找到匹配的角色</div>
+            <div class="empty-subtitle">尝试调整搜索条件或筛选器</div>
+          </div>
+        `;
+        return;
+      }
+      
+      const roleHTML = roles.map(role => `
+        <div class="role-card-large ${role.is_custom ? 'custom-role' : ''}" data-role-id="${role.id}">
+          <img src="${role.image}" alt="${role.name}头像" class="role-image-large" loading="lazy">
+          <div class="role-info-large">
+            <div class="role-name-large">
+              ${role.name}
+              ${role.is_custom ? '<span class="custom-badge">自定义</span>' : ''}
+            </div>
+            <div class="role-description">${role.description}</div>
+            <div class="role-tags">
+              ${role.tags.map(tag => `<span class="role-tag">${tag}</span>`).join('')}
+            </div>
+            <div class="role-actions">
+              <button class="action-btn select-btn" onclick="selectRoleFromLibrary('${role.id}')">
+                选择角色
+              </button>
+              <button class="action-btn preview-btn" onclick="previewRole('${role.id}')">
+                预览
+              </button>
+              ${role.is_custom ? `<button class="action-btn delete-btn" onclick="deleteCustomRole('${role.id}')" title="删除角色">删除</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      console.log('生成的角色HTML长度:', roleHTML.length);
+      roleGrid.innerHTML = roleHTML;
+      console.log('角色库HTML已更新，当前roleGrid子元素数量:', roleGrid.children.length);
+      
+      // 绑定筛选器事件
+      bindFilterEvents();
+    }
+    
+    // 从角色库选择角色
+    async function selectRoleFromLibrary(roleId) {
+      console.log('=== 选择角色调试信息 ===');
+      console.log('角色ID:', roleId);
+      console.log('当前角色库:', roleLibrary);
+      
+      const role = roleLibrary.find(r => r.id === roleId);
+      console.log('找到的角色:', role);
+      
+      if (role) {
+        console.log('角色名称:', role.name);
+        console.log('角色图片:', role.image);
+        console.log('角色是否为自定义:', role.is_custom);
+        console.log('角色完整数据:', JSON.stringify(role, null, 2));
+        
+        await selectRole(role.name, role.image);
+        switchPage('chatPage');
+      } else {
+        console.error('未找到角色，ID:', roleId);
+      }
+    }
+    
+    // 预览角色
+    function previewRole(roleId) {
+      const role = roleLibrary.find(r => r.id === roleId);
+      if (role) {
+        alert(`角色预览：${role.name}\n\n描述：${role.description}\n\n性格：${role.personality}`);
+      }
+    }
+    
+    // 角色选择功能
+    async function selectRole(roleName, roleImage) {
+      console.log('=== selectRole 函数调试信息 ===');
+      console.log(`开始切换到角色: "${roleName}"`);
+      console.log(`角色图片: "${roleImage}"`);
+      console.log(`角色图片类型: ${typeof roleImage}`);
+      console.log(`角色图片是否为空: ${!roleImage}`);
+      console.log(`角色图片是否为空字符串: ${roleImage === ''}`);
+      
+      currentRole = roleName;
+      roleTitle.textContent = roleName;
+      console.log(`当前角色已设置为: "${currentRole}"`);
+      console.log(`角色标题已更新为: "${roleTitle.textContent}"`);
+      
+      // 更新头像（如果有角色图片）
+      const avatar = document.querySelector('.avatar');
+      console.log('找到头像元素:', avatar);
+      if (roleImage && roleImage.trim() !== '') {
+        console.log('设置角色头像图片:', roleImage);
+        avatar.innerHTML = `<img src="${roleImage}" alt="${roleName}头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        console.log('头像已更新为角色图片');
+      } else {
+        console.log('没有角色图片或图片为空，使用默认头像');
+        // 保持默认头像
+      }
+      
+      // 更新左侧当前角色显示
+      console.log('更新左侧当前角色显示...');
+      updateCurrentRoleDisplay(roleName, roleImage);
+      
+      // 清空当前对话
+      console.log('清空当前对话...');
+      clearCurrentConversation();
+      
+      // 加载该角色的历史对话
+      console.log('加载角色历史对话...');
+      await loadCharacterConversationHistory(roleName);
+      
+      // 添加角色欢迎消息
+      console.log('添加角色欢迎消息...');
+      addMessage(`你好！我是${roleName}，很高兴与你对话！`, 'received');
+      console.log(`角色切换完成: "${roleName}"`);
+    }
+    
+    // 更新左侧当前角色显示
+    function updateCurrentRoleDisplay(roleName, roleImage) {
+      console.log('=== updateCurrentRoleDisplay 函数调试信息 ===');
+      console.log(`updateCurrentRoleDisplay 被调用: roleName="${roleName}", roleImage="${roleImage}"`);
+      console.log(`角色名称类型: ${typeof roleName}, 是否为空: ${!roleName}`);
+      console.log(`角色图片类型: ${typeof roleImage}, 是否为空: ${!roleImage}, 是否为空字符串: ${roleImage === ''}`);
+      
+      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
+      console.log('找到 currentRoleDisplay 元素:', currentRoleDisplay);
+      
+      if (!currentRoleDisplay) {
+        console.log('未找到 currentRoleDisplay 元素');
+        return;
+      }
+      
+      if (roleName && roleImage && roleImage.trim() !== '') {
+        console.log('更新为角色卡片显示');
+        console.log('角色图片URL:', roleImage);
+        currentRoleDisplay.innerHTML = `
+          <div class="current-role-card">
+            <img src="${roleImage}" alt="${roleName}头像" class="current-role-image" loading="lazy">
+            <div class="current-role-name">${roleName}</div>
+          </div>
+        `;
+        console.log('已设置角色卡片HTML');
+      } else {
+        console.log('更新为占位符显示');
+        console.log('原因 - 角色名称:', roleName, '角色图片:', roleImage);
+        currentRoleDisplay.innerHTML = `
+          <div class="current-role-placeholder">
+            <iconify-icon icon="mdi:account-circle" style="font-size: 80px; color: #cbd5e1;" aria-hidden="true"></iconify-icon>
+            <div class="placeholder-text">未选择角色</div>
+          </div>
+        `;
+        console.log('已设置占位符HTML');
+      }
+      console.log('currentRoleDisplay 更新完成');
+    }
+    
+    // 显示欢迎页面
+    function showWelcomePage() {
+      const messagesContainer = document.querySelector('.chat-messages');
+      if (messagesContainer) {
+        // 添加欢迎模式类
+        messagesContainer.classList.add('welcome-mode');
+        
+        messagesContainer.innerHTML = `
+          <div class="welcome-container">
+            <div class="welcome-message">
+              <div class="welcome-icon">
+                <iconify-icon icon="mdi:account-multiple" style="font-size: 100px; color: #6366f1;"></iconify-icon>
+              </div>
+              <div class="welcome-title">欢迎使用AI角色扮演平台！</div>
+              <div class="welcome-description">
+                请从左侧角色库中选择一个您喜欢的角色，开始精彩的AI对话体验。
+              </div>
+              <div class="welcome-features">
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:account-circle" style="font-size: 28px; color: #10b981;"></iconify-icon>
+                  <span>28个精选角色</span>
+                </div>
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:microphone" style="font-size: 28px; color: #f59e0b;"></iconify-icon>
+                  <span>语音交互</span>
+                </div>
+                <div class="feature-item">
+                  <iconify-icon icon="mdi:brain" style="font-size: 28px; color: #8b5cf6;"></iconify-icon>
+                  <span>智能对话</span>
+                </div>
+              </div>
+              <div class="welcome-action">
+                <button class="welcome-btn" onclick="switchPage('roleLibraryPage')">
+                  <iconify-icon icon="mdi:account-plus" style="font-size: 24px;"></iconify-icon>
+                  <span>开始选择角色</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 清空当前对话
+    function clearCurrentConversation() {
+      const messagesContainer = document.querySelector('.chat-messages');
+      if (messagesContainer) {
+        console.log('清空对话消息，之前有', messagesContainer.children.length, '条消息');
+        // 移除欢迎模式类
+        messagesContainer.classList.remove('welcome-mode');
+        // 清空所有内容
+        messagesContainer.innerHTML = '';
+        console.log('清空后剩余', messagesContainer.children.length, '条消息');
+      } else {
+        console.warn('未找到消息容器 .chat-messages');
+      }
+    }
+    
+    // 加载角色的历史对话
+    async function loadCharacterConversationHistory(characterName) {
+      try {
+        console.log(`开始加载角色 "${characterName}" 的历史对话`);
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/conversations/character/${encodeURIComponent(characterName)}`);
+        const data = await response.json();
+        
+        console.log(`角色 "${characterName}" 的历史对话数据:`, data);
+        
+        if (data.success && data.conversations && data.conversations.length > 0) {
+          // 获取最新的对话（第一个）
+          const latestConversation = data.conversations[0];
+          console.log(`找到 ${data.conversations.length} 个历史对话，显示最新的对话`);
+          
+          // 显示历史消息
+          if (latestConversation.messages && latestConversation.messages.length > 0) {
+            console.log(`显示 ${latestConversation.messages.length} 条历史消息`);
+            // 添加一个分隔线表示历史对话
+            addMessage(`--- 与${characterName}的历史对话 ---`, 'system');
+            
+            // 显示历史消息（限制显示最近10条消息，避免界面过于拥挤）
+            const recentMessages = latestConversation.messages.slice(-10);
+            recentMessages.forEach(msg => {
+              if (msg.role === 'user') {
+                addMessage(msg.content, 'sent');
+              } else if (msg.role === 'assistant') {
+                addMessage(msg.content, 'received');
+              }
+            });
+            
+            // 添加分隔线
+            addMessage(`--- 继续对话 ---`, 'system');
+          }
+        } else {
+          console.log(`角色 "${characterName}" 没有历史对话记录`);
+        }
+      } catch (error) {
+        console.error('加载角色历史对话失败:', error);
+        // 如果加载失败，不影响正常使用，只是不显示历史对话
+      }
+    }
+    
+    // 角色库筛选功能
+    function filterRoles(category) {
+      console.log('filterRoles 被调用，分类:', category);
+      console.log('roleLibrary 总数:', roleLibrary.length);
+      
+      // 获取当前搜索词
+      const searchInput = document.getElementById('librarySearch');
+      const searchTerm = searchInput ? searchInput.value.trim() : '';
+      
+      // 先按分类筛选
+      let filteredRoles = category === 'all' 
+        ? roleLibrary 
+        : roleLibrary.filter(role => role.category === category);
+      
+      // 如果有搜索词，再按搜索词筛选
+      if (searchTerm) {
+        filteredRoles = filteredRoles.filter(role => 
+          role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      }
+      
+      console.log('筛选分类:', category, '搜索词:', searchTerm, '结果数量:', filteredRoles.length);
+      renderRoleLibrary(filteredRoles);
+    }
+    
+    // 角色库搜索功能
+    function searchRoles(searchTerm) {
+      // 获取当前激活的筛选器
+      const activeFilter = document.querySelector('.filter-btn.active');
+      const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+      
+      // 先按分类筛选
+      let filteredRoles = category === 'all' 
+        ? roleLibrary 
+        : roleLibrary.filter(role => role.category === category);
+      
+      // 再按搜索词筛选
+      filteredRoles = filteredRoles.filter(role => 
+        role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      console.log('搜索词:', searchTerm, '筛选分类:', category, '结果数量:', filteredRoles.length);
+      renderRoleLibrary(filteredRoles);
+    }
+    
+    // 触发搜索功能
+    function triggerSearch() {
+      const searchInput = document.getElementById('librarySearch');
+      if (searchInput) {
+        const searchTerm = searchInput.value.trim();
+        console.log('手动触发搜索:', searchTerm);
+        if (searchTerm === '') {
+          // 如果搜索框为空，显示当前筛选的所有角色
+          const activeFilter = document.querySelector('.filter-btn.active');
+          const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+          filterRoles(category);
+        } else {
+          searchRoles(searchTerm);
+        }
+      }
+    }
+    
+    // 渲染历史对话列表
+    function renderHistoryList(filteredHistory = null) {
+      const historyList = document.getElementById('historyList');
+      if (!historyList) return;
+      
+      const history = filteredHistory || conversationHistory;
+      
+      if (history.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">暂无对话记录</div>
+            <div class="empty-subtitle">开始与AI角色对话，记录将显示在这里</div>
+          </div>
+        `;
+        return;
+      }
+      
+      historyList.innerHTML = history.map(conv => `
+        <div class="history-item" data-conversation-id="${conv.id}">
+          <div class="history-item-header">
+            <div class="history-avatar">
+              <img src="${conv.roleImage}" alt="${conv.roleName}头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            </div>
+            <div class="history-role-info">
+              <div class="history-role-name">${conv.roleName}</div>
+              <div class="history-time">${formatTime(conv.timestamp)}</div>
+            </div>
+            <div class="history-actions">
+              <button class="history-action-btn continue-btn" onclick="continueConversation('${conv.id}')">
+                继续对话
+              </button>
+              <button class="history-action-btn delete-btn" onclick="deleteConversation('${conv.id}')">
+                删除
+              </button>
+            </div>
+          </div>
+          <div class="history-preview">
+            <div class="history-last-message">${conv.lastMessage}</div>
+          </div>
+          <div class="history-stats">
+            <div class="history-stat">
+              <iconify-icon icon="mdi:message-text" style="font-size: 14px;"></iconify-icon>
+              <span>${conv.messageCount} 条消息</span>
+            </div>
+            <div class="history-stat">
+              <iconify-icon icon="mdi:clock" style="font-size: 14px;"></iconify-icon>
+              <span>${conv.duration}</span>
+            </div>
+            ${conv.isFavorite ? `
+              <div class="history-stat">
+                <iconify-icon icon="mdi:star" style="font-size: 14px; color: #fbbf24;"></iconify-icon>
+                <span>已收藏</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 格式化时间显示
+    function formatTime(timestamp) {
+      const now = new Date();
+      const diff = now - timestamp;
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (minutes < 60) {
+        return `${minutes}分钟前`;
+      } else if (hours < 24) {
+        return `${hours}小时前`;
+      } else if (days < 7) {
+        return `${days}天前`;
+      } else {
+        return timestamp.toLocaleDateString('zh-CN');
+      }
+    }
+    
+    // 继续对话
+    async function continueConversation(conversationId) {
+      const conv = conversationHistory.find(c => c.id === conversationId);
+      if (conv) {
+        await selectRole(conv.roleName, conv.roleImage);
+        switchPage('chatPage');
+        addMessage(`继续与${conv.roleName}的对话`, 'system');
+      }
+    }
+    
+    // 删除对话
+    function deleteConversation(conversationId) {
+      if (confirm('确定要删除这个对话记录吗？此操作无法撤销。')) {
+        const index = conversationHistory.findIndex(c => c.id === conversationId);
+        if (index > -1) {
+          conversationHistory.splice(index, 1);
+          renderHistoryList();
+        }
+      }
+    }
+    
+    // 历史对话筛选
+    function filterHistory(filter) {
+      let filteredHistory = conversationHistory;
+      
+      switch (filter) {
+        case 'recent':
+          // 最近7天的对话
+          const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          filteredHistory = conversationHistory.filter(conv => conv.timestamp > weekAgo);
+          break;
+        case 'favorites':
+          // 收藏的对话
+          filteredHistory = conversationHistory.filter(conv => conv.isFavorite);
+          break;
+        case 'today':
+          // 今天的对话
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          filteredHistory = conversationHistory.filter(conv => conv.timestamp > today);
+          break;
+        case 'all':
+        default:
+          filteredHistory = conversationHistory;
+          break;
+      }
+      
+      renderHistoryList(filteredHistory);
+    }
+    
+    // 历史对话搜索
+    function searchHistory(searchTerm) {
+      const filteredHistory = conversationHistory.filter(conv => 
+        conv.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      renderHistoryList(filteredHistory);
+    }
+    
+    // 切换收藏标签页
+    function switchFavoritesTab(tabName) {
+      // 更新标签按钮状态
+      document.querySelectorAll('.favorites-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      
+      // 更新内容显示
+      document.querySelectorAll('.favorites-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(`${tabName === 'roles' ? 'favoriteRoles' : 'favoriteConversations'}Content`).classList.add('active');
+      
+      // 渲染对应内容
+      if (tabName === 'roles') {
+        renderFavoriteRoles();
+      } else if (tabName === 'conversations') {
+        renderFavoriteConversations();
+      }
+    }
+    
+    // 渲染收藏角色
+    function renderFavoriteRoles(filteredRoles = null) {
+      const favoriteRolesGrid = document.getElementById('favoriteRolesGrid');
+      if (!favoriteRolesGrid) return;
+      
+      const roles = filteredRoles || favoriteRoles;
+      
+      if (roles.length === 0) {
+        favoriteRolesGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⭐</div>
+            <div class="empty-title">暂无收藏角色</div>
+            <div class="empty-subtitle">在角色库中收藏喜欢的角色，它们会显示在这里</div>
+          </div>
+        `;
+        return;
+      }
+      
+      favoriteRolesGrid.innerHTML = roles.map(role => `
+        <div class="favorite-role-card" data-role-id="${role.id}">
+          <div class="favorite-star">⭐</div>
+          <img src="${role.image}" alt="${role.name}头像" class="favorite-role-image" loading="lazy">
+          <div class="favorite-role-info">
+            <div class="favorite-role-name">${role.name}</div>
+            <div class="favorite-role-description">${role.description}</div>
+            <div class="favorite-role-tags">
+              ${role.tags.map(tag => `<span class="favorite-role-tag">${tag}</span>`).join('')}
+            </div>
+            <div class="favorite-role-actions">
+              <button class="favorite-role-action-btn favorite-select-btn" onclick="selectFavoriteRole('${role.id}')">
+                选择角色
+              </button>
+              <button class="favorite-role-action-btn favorite-remove-btn" onclick="removeFavoriteRole('${role.id}')">
+                取消收藏
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 渲染收藏对话
+    function renderFavoriteConversations(filteredConversations = null) {
+      const favoriteConversationsList = document.getElementById('favoriteConversationsList');
+      if (!favoriteConversationsList) return;
+      
+      const conversations = filteredConversations || favoriteConversations;
+      
+      if (conversations.length === 0) {
+        favoriteConversationsList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">暂无收藏对话</div>
+            <div class="empty-subtitle">在历史对话中收藏喜欢的对话，它们会显示在这里</div>
+          </div>
+        `;
+        return;
+      }
+      
+      favoriteConversationsList.innerHTML = conversations.map(conv => `
+        <div class="favorite-conversation-item" data-conversation-id="${conv.id}">
+          <div class="favorite-star">⭐</div>
+          <div class="favorite-conversation-header">
+            <div class="favorite-conversation-avatar">
+              <img src="${conv.roleImage}" alt="${conv.roleName}头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            </div>
+            <div class="favorite-conversation-info">
+              <div class="favorite-conversation-name">${conv.roleName}</div>
+              <div class="favorite-conversation-time">${formatTime(conv.timestamp)}</div>
+            </div>
+            <div class="favorite-conversation-actions">
+              <button class="favorite-conversation-action-btn favorite-continue-btn" onclick="continueFavoriteConversation('${conv.id}')">
+                继续对话
+              </button>
+              <button class="favorite-conversation-action-btn favorite-unfavorite-btn" onclick="removeFavoriteConversation('${conv.id}')">
+                取消收藏
+              </button>
+            </div>
+          </div>
+          <div class="favorite-conversation-preview">
+            <div class="favorite-conversation-message">${conv.lastMessage}</div>
+          </div>
+          <div class="favorite-conversation-stats">
+            <div class="favorite-conversation-stat">
+              <iconify-icon icon="mdi:message-text" style="font-size: 14px;"></iconify-icon>
+              <span>${conv.messageCount} 条消息</span>
+            </div>
+            <div class="favorite-conversation-stat">
+              <iconify-icon icon="mdi:clock" style="font-size: 14px;"></iconify-icon>
+              <span>${conv.duration}</span>
+            </div>
+            <div class="favorite-conversation-stat">
+              <iconify-icon icon="mdi:star" style="font-size: 14px; color: #fbbf24;"></iconify-icon>
+              <span>收藏于 ${formatTime(conv.addedDate)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 选择收藏角色
+    async function selectFavoriteRole(roleId) {
+      const role = favoriteRoles.find(r => r.id === roleId);
+      if (role) {
+        await selectRole(role.name, role.image);
+        switchPage('chatPage');
+      }
+    }
+    
+    // 移除收藏角色
+    function removeFavoriteRole(roleId) {
+      if (confirm('确定要取消收藏这个角色吗？')) {
+        const index = favoriteRoles.findIndex(r => r.id === roleId);
+        if (index > -1) {
+          favoriteRoles.splice(index, 1);
+          renderFavoriteRoles();
+        }
+      }
+    }
+    
+    // 继续收藏对话
+    async function continueFavoriteConversation(conversationId) {
+      const conv = favoriteConversations.find(c => c.id === conversationId);
+      if (conv) {
+        await selectRole(conv.roleName, conv.roleImage);
+        switchPage('chatPage');
+        addMessage(`继续与${conv.roleName}的对话`, 'system');
+      }
+    }
+    
+    // 移除收藏对话
+    function removeFavoriteConversation(conversationId) {
+      if (confirm('确定要取消收藏这个对话吗？')) {
+        const index = favoriteConversations.findIndex(c => c.id === conversationId);
+        if (index > -1) {
+          favoriteConversations.splice(index, 1);
+          renderFavoriteConversations();
+        }
+      }
+    }
+    
+    // 清空所有收藏角色
+    function clearAllFavoriteRoles() {
+      if (confirm('确定要清空所有收藏的角色吗？此操作无法撤销。')) {
+        favoriteRoles.length = 0;
+        renderFavoriteRoles();
+      }
+    }
+    
+    // 清空所有收藏对话
+    function clearAllFavoriteConversations() {
+      if (confirm('确定要清空所有收藏的对话吗？此操作无法撤销。')) {
+        favoriteConversations.length = 0;
+        renderFavoriteConversations();
+      }
+    }
+    
+    // 搜索收藏角色
+    function searchFavoriteRoles(searchTerm) {
+      const filteredRoles = favoriteRoles.filter(role => 
+        role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      renderFavoriteRoles(filteredRoles);
+    }
+    
+    // 搜索收藏对话
+    function searchFavoriteConversations(searchTerm) {
+      const filteredConversations = favoriteConversations.filter(conv => 
+        conv.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      renderFavoriteConversations(filteredConversations);
+    }
+    
+    // 设置页面功能
+    function loadSettings() {
+      // 从localStorage加载设置
+      const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
+      
+      // 语音设置
+      document.getElementById('voiceRecognitionToggle').checked = settings.voiceRecognition !== false;
+      document.getElementById('voiceSynthesisToggle').checked = settings.voiceSynthesis !== false;
+      document.getElementById('voiceSpeedSelect').value = settings.voiceSpeed || '1.0';
+      document.getElementById('voiceToneSelect').value = settings.voiceTone || 'alloy';
+      
+      // 界面设置
+      document.getElementById('darkModeToggle').checked = settings.darkMode || false;
+      document.getElementById('animationsToggle').checked = settings.animations !== false;
+      document.getElementById('fontSizeSelect').value = settings.fontSize || 'medium';
+      document.getElementById('languageSelect').value = settings.language || 'zh-CN';
+      
+      // AI设置
+      document.getElementById('aiModelSelect').value = settings.aiModel || 'gpt-4o';
+      document.getElementById('creativitySelect').value = settings.creativity || '0.7';
+      document.getElementById('responseLengthSelect').value = settings.responseLength || 'medium';
+      
+      // 隐私设置
+      document.getElementById('dataCollectionToggle').checked = settings.dataCollection !== false;
+      document.getElementById('conversationHistoryToggle').checked = settings.conversationHistory !== false;
+      document.getElementById('autoCleanupToggle').checked = settings.autoCleanup !== false;
+      
+      // 高级设置
+      document.getElementById('apiKeyInput').value = settings.apiKey || '';
+      document.getElementById('openaiUrlInput').value = settings.openaiUrl || 'https://api.openai.com/v1';
+      document.getElementById('backendUrlInput').value = settings.backendUrl || 'http://localhost:5000';
+      document.getElementById('debugModeToggle').checked = settings.debugMode || false;
+      
+      // 应用设置
+      applySettings(settings);
+    }
+    
+    function saveSettings() {
+      const settings = {
+        // 语音设置
+        voiceRecognition: document.getElementById('voiceRecognitionToggle').checked,
+        voiceSynthesis: document.getElementById('voiceSynthesisToggle').checked,
+        voiceSpeed: document.getElementById('voiceSpeedSelect').value,
+        voiceTone: document.getElementById('voiceToneSelect').value,
+        
+        // 界面设置
+        darkMode: document.getElementById('darkModeToggle').checked,
+        animations: document.getElementById('animationsToggle').checked,
+        fontSize: document.getElementById('fontSizeSelect').value,
+        language: document.getElementById('languageSelect').value,
+        
+        // AI设置
+        aiModel: document.getElementById('aiModelSelect').value,
+        creativity: document.getElementById('creativitySelect').value,
+        responseLength: document.getElementById('responseLengthSelect').value,
+        
+        // 隐私设置
+        dataCollection: document.getElementById('dataCollectionToggle').checked,
+        conversationHistory: document.getElementById('conversationHistoryToggle').checked,
+        autoCleanup: document.getElementById('autoCleanupToggle').checked,
+        
+        // 高级设置
+        apiKey: document.getElementById('apiKeyInput').value,
+        openaiUrl: document.getElementById('openaiUrlInput').value,
+        backendUrl: document.getElementById('backendUrlInput').value,
+        debugMode: document.getElementById('debugModeToggle').checked
+      };
+      
+      localStorage.setItem('aiSettings', JSON.stringify(settings));
+      applySettings(settings);
+    }
+    
+    function applySettings(settings) {
+      // 应用深色模式
+      if (settings.darkMode) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+      
+      // 应用字体大小
+      const fontSizeMap = {
+        'small': '12px',
+        'medium': '14px',
+        'large': '16px',
+        'xlarge': '18px'
+      };
+      document.documentElement.style.fontSize = fontSizeMap[settings.fontSize] || '14px';
+      
+      // 应用动画设置
+      if (!settings.animations) {
+        document.documentElement.style.setProperty('--animation-duration', '0s');
+      } else {
+        document.documentElement.style.removeProperty('--animation-duration');
+      }
+    }
+    
+    function editSystemPrompt() {
+      const currentPrompt = localStorage.getItem('systemPrompt') || '你是一个友好的AI助手，请根据用户选择的角色来扮演相应的角色。';
+      const newPrompt = prompt('编辑系统提示词:', currentPrompt);
+      if (newPrompt !== null) {
+        localStorage.setItem('systemPrompt', newPrompt);
+        alert('系统提示词已更新');
+      }
+    }
+    
+    function exportData() {
+      const data = {
+        settings: JSON.parse(localStorage.getItem('aiSettings') || '{}'),
+        conversations: conversationHistory,
+        favorites: {
+          roles: favoriteRoles,
+          conversations: favoriteConversations
+        },
+        roles: roleLibrary,
+        exportDate: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ai-assistant-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              const data = JSON.parse(e.target.result);
+              
+              if (data.settings) {
+                localStorage.setItem('aiSettings', JSON.stringify(data.settings));
+              }
+              if (data.conversations) {
+                conversationHistory.length = 0;
+                conversationHistory.push(...data.conversations);
+              }
+              if (data.favorites) {
+                if (data.favorites.roles) {
+                  favoriteRoles.length = 0;
+                  favoriteRoles.push(...data.favorites.roles);
+                }
+                if (data.favorites.conversations) {
+                  favoriteConversations.length = 0;
+                  favoriteConversations.push(...data.favorites.conversations);
+                }
+              }
+              if (data.roles) {
+                roleLibrary.length = 0;
+                roleLibrary.push(...data.roles);
+              }
+              
+              alert('数据导入成功！页面将刷新以应用更改。');
+              location.reload();
+            } catch (error) {
+              alert('导入失败：文件格式不正确');
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+      input.click();
+    }
+    
+    function resetSettings() {
+      if (confirm('确定要重置所有设置为默认值吗？此操作无法撤销。')) {
+        localStorage.removeItem('aiSettings');
+        localStorage.removeItem('systemPrompt');
+        alert('设置已重置为默认值，页面将刷新。');
+        location.reload();
+      }
+    }
+    
+    function clearAllData() {
+      if (confirm('确定要清除所有数据吗？这将删除所有对话记录、收藏和设置。此操作无法撤销！')) {
+        localStorage.clear();
+        conversationHistory.length = 0;
+        favoriteRoles.length = 0;
+        favoriteConversations.length = 0;
+        roleLibrary.length = 0;
+        alert('所有数据已清除，页面将刷新。');
+        location.reload();
+      }
+    }
+    
+    // 头部按钮功能
+    function showNotifications() {
+      switchPage('notificationsPage');
+    }
+    
+    // 显示通知消息
+    function showNotification(message, type = 'info') {
+      console.log(`📢 通知 [${type}]: ${message}`);
+      
+      // 创建通知元素
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.innerHTML = `
+        <div class="notification-content">
+          <span class="notification-message">${message}</span>
+          <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+      `;
+      
+      // 添加到页面
+      document.body.appendChild(notification);
+      
+      // 自动移除通知
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+    
+    function showUserProfile() {
+      switchPage('profilePage');
+    }
+    
+    function showCharacterSettings() {
+      switchPage('characterSettingsPage');
+    }
+    
+    // 事件监听器
+    if (recordBtn) {
+      recordBtn.addEventListener('click', function() {
+        if (isRecording) {
+          stopRecording();
+        } else {
+          startRecording();
+        }
+      });
+    }
+    
+    // TTS开关按钮事件监听器
+    if (ttsToggleBtn) {
+      ttsToggleBtn.addEventListener('click', function() {
+        ttsEnabled = !ttsEnabled;
+        this.setAttribute('aria-pressed', ttsEnabled);
+        
+        // 更新按钮图标和样式
+        const icon = this.querySelector('iconify-icon');
+        if (ttsEnabled) {
+          icon.setAttribute('icon', 'mdi:volume-high');
+          this.style.opacity = '1';
+          console.log('TTS已开启');
+        } else {
+          icon.setAttribute('icon', 'mdi:volume-off');
+          this.style.opacity = '0.5';
+          console.log('TTS已关闭');
+        }
+      });
+    } else {
+      console.log('TTS开关按钮元素未找到，跳过事件监听器绑定');
+    }
+    
+    // 音量滑块事件监听器
+    if (volumeSlider) {
+      volumeSlider.addEventListener('input', function() {
+        volumeLevel = parseInt(this.value);
+        console.log('音量设置为:', volumeLevel + '%');
+      });
+      
+      // 初始化音量滑块值
+      volumeSlider.value = volumeLevel;
+    }
+    
+    // 消息发送功能
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    // 发送按钮点击事件
+    if (sendBtn) {
+      sendBtn.addEventListener('click', sendMessage);
+    }
+    
+    // 回车键发送消息
+    if (messageInput) {
+      messageInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+    
+    // 发送消息函数
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
+      
+      // 检查是否选择了角色
+      if (!currentRole) {
+        addMessage('请先选择一个角色进行对话', 'system');
+        return;
+      }
+      
+      // 清空输入框
+      messageInput.value = '';
+      
+      // 显示用户消息
+      addMessage(message, 'sent');
+      
+      // 禁用发送按钮
+      sendBtn.disabled = true;
+      
+      try {
+        // 生成AI回复
+        await generateAIResponse(message);
+      } catch (error) {
+        console.error('发送消息失败:', error);
+        addMessage('发送失败，请重试', 'system');
+      } finally {
+        // 重新启用发送按钮
+        sendBtn.disabled = false;
+        messageInput.focus();
+      }
+    }
+    
+    // 角色卡片点击事件
+    document.querySelectorAll('.role-card').forEach(card => {
+      card.addEventListener('click', async function() {
+        const roleName = this.querySelector('.role-name').textContent;
+        const roleImage = this.querySelector('.role-image').src;
+        await selectRole(roleName, roleImage);
+      });
+    });
+    
+    // 搜索功能
+    const searchInput = document.querySelector('.library-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const roleCards = document.querySelectorAll('.role-card');
+      
+        roleCards.forEach(card => {
+          const roleName = card.querySelector('.role-name').textContent.toLowerCase();
+          const isVisible = roleName.includes(searchTerm);
+          card.style.display = isVisible ? 'block' : 'none';
+        });
+      });
+    }
+    
+    
+    
+    const favoriteConversationsSearchInput = document.getElementById('favoriteConversationsSearch');
+    if (favoriteConversationsSearchInput) {
+      favoriteConversationsSearchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        if (searchTerm === '') {
+          renderFavoriteConversations();
+        } else {
+          searchFavoriteConversations(searchTerm);
+        }
+      });
+    }
+    
+    // 角色库筛选器事件绑定函数
+    function bindFilterEvents() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        // 移除已存在的事件监听器（避免重复绑定）
+        btn.removeEventListener('click', handleFilterClick);
+        // 添加新的事件监听器
+        btn.addEventListener('click', handleFilterClick);
+      });
+    }
+    
+    // 筛选按钮点击处理函数
+    function handleFilterClick() {
+      console.log('筛选按钮被点击:', this.textContent, this.getAttribute('data-category'));
+      
+      // 更新按钮状态
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // 筛选角色
+      const category = this.getAttribute('data-category');
+      console.log('筛选分类:', category);
+      filterRoles(category);
+    }
+
+    // 设置页面事件监听器
+    document.addEventListener('DOMContentLoaded', function() {
+      // 设置项变更时自动保存
+      const settingsInputs = [
+        'voiceRecognitionToggle', 'voiceSynthesisToggle', 'voiceSpeedSelect', 'voiceToneSelect',
+        'darkModeToggle', 'animationsToggle', 'fontSizeSelect', 'languageSelect',
+        'aiModelSelect', 'creativitySelect', 'responseLengthSelect',
+        'dataCollectionToggle', 'conversationHistoryToggle', 'autoCleanupToggle',
+        'apiKeyInput', 'openaiUrlInput', 'backendUrlInput', 'debugModeToggle'
+      ];
+      
+      settingsInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+          input.addEventListener('change', saveSettings);
+          if (input.type === 'text' || input.type === 'password') {
+            input.addEventListener('input', debounce(saveSettings, 1000));
+          }
+        }
+      });
+      
+      
+      // 角色库搜索事件
+      const librarySearchInput = document.getElementById('librarySearch');
+      if (librarySearchInput) {
+        // 输入事件 - 实时搜索
+        librarySearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            // 如果搜索框为空，显示当前筛选的所有角色
+            const activeFilter = document.querySelector('.filter-btn.active');
+            const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+            filterRoles(category);
+          } else {
+            searchRoles(searchTerm);
+          }
+        });
+        
+        // 回车键事件 - 确认搜索
+        librarySearchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const searchTerm = this.value.trim();
+            console.log('回车搜索:', searchTerm);
+            if (searchTerm === '') {
+              // 如果搜索框为空，显示当前筛选的所有角色
+              const activeFilter = document.querySelector('.filter-btn.active');
+              const category = activeFilter ? activeFilter.getAttribute('data-category') : 'all';
+              filterRoles(category);
+            } else {
+              searchRoles(searchTerm);
+            }
+          }
+        });
+      }
+      
+      // 历史对话筛选器事件
+      document.querySelectorAll('.history-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          // 更新按钮状态
+          document.querySelectorAll('.history-filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          // 筛选历史记录
+          const filter = this.getAttribute('data-filter');
+          filterHistory(filter);
+        });
+      });
+      
+      // 历史对话搜索事件
+      const historySearchInput = document.getElementById('historySearch');
+      if (historySearchInput) {
+        historySearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            renderHistoryList();
+          } else {
+            const filteredHistory = conversationHistory.filter(conv => 
+              conv.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              conv.messages.some(msg => msg.content.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            renderHistoryList(filteredHistory);
+          }
+        });
+      }
+      
+      // 我的收藏搜索事件
+      const favoritesSearchInput = document.getElementById('favoritesSearch');
+      if (favoritesSearchInput) {
+        favoritesSearchInput.addEventListener('input', function() {
+          const searchTerm = this.value.trim();
+          if (searchTerm === '') {
+            renderFavoriteRoles();
+          } else {
+            const filteredFavorites = favoriteRoles.filter(role => 
+              role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              role.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              role.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            renderFavoriteRoles(filteredFavorites);
+          }
+        });
+      }
+    });
+    
+    // 防抖函数
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+    
+    // 键盘快捷键
+    document.addEventListener('keydown', function(event) {
+      // 空格键开始/停止录音
+      if (event.code === 'Space' && !event.target.matches('input, textarea')) {
+        event.preventDefault();
+      if (isRecording) {
+          stopRecording();
+      } else {
+          startRecording();
+        }
+      }
+    });
+    
+    // 自定义角色管理功能
+    let customRoles = [];
+    
+    // 打开创建角色弹窗
+    function openCreateRoleModal() {
+      document.getElementById('createRoleModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      // 确保表单事件已绑定
+      bindCreateRoleFormEvent();
+    }
+    
+    // 关闭创建角色弹窗
+    function closeCreateRoleModal() {
+      document.getElementById('createRoleModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      resetCreateRoleForm();
+    }
+    
+    // 重置创建角色表单
+    function resetCreateRoleForm() {
+      document.getElementById('createRoleForm').reset();
+      clearFormErrors();
+    }
+    
+    // 清除表单错误
+    function clearFormErrors() {
+      const errorElements = document.querySelectorAll('.form-error');
+      errorElements.forEach(element => {
+        element.style.display = 'none';
+        element.textContent = '';
+      });
+    }
+    
+    // 显示表单错误
+    function showFormError(fieldName, message) {
+      const errorElement = document.getElementById(fieldName + 'Error');
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+    }
+    
+    // 表单验证
+    function validateCreateRoleForm(formData) {
+      let isValid = true;
+      clearFormErrors();
+      
+      // 验证角色名称
+      if (!formData.name || formData.name.trim().length === 0) {
+        showFormError('name', '角色名称不能为空');
+        isValid = false;
+      } else if (formData.name.length > 50) {
+        showFormError('name', '角色名称不能超过50个字符');
+        isValid = false;
+      }
+      
+      // 验证角色描述
+      if (!formData.description || formData.description.trim().length === 0) {
+        showFormError('description', '角色描述不能为空');
+        isValid = false;
+      } else if (formData.description.length > 500) {
+        showFormError('description', '角色描述不能超过500个字符');
+        isValid = false;
+      }
+      
+      // 验证性格特点
+      if (!formData.personality || formData.personality.trim().length === 0) {
+        showFormError('personality', '性格特点不能为空');
+        isValid = false;
+      } else if (formData.personality.length > 200) {
+        showFormError('personality', '性格特点不能超过200个字符');
+        isValid = false;
+      }
+      
+      // 验证头像URL
+      if (formData.image && formData.image.trim().length > 0) {
+        try {
+          new URL(formData.image);
+        } catch (e) {
+          showFormError('image', '请输入有效的URL地址');
+          isValid = false;
+        }
+      }
+      
+      return isValid;
+    }
+    
+    // 创建自定义角色
+    async function createCustomRole(formData) {
+      console.log('=== 开始创建角色 ===');
+      console.log('createCustomRole 函数被调用');
+      console.log('传入的表单数据:', formData);
+      
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('后端URL:', backendUrl);
+        console.log('完整请求URL:', `${backendUrl}/api/characters/custom`);
+        console.log('准备发送POST请求...');
+        
+        const response = await fetch(`${backendUrl}/api/characters/custom`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        console.log('HTTP响应状态:', response.status);
+        console.log('HTTP响应状态文本:', response.statusText);
+        console.log('响应头:', response.headers);
+        
+        if (!response.ok) {
+          console.error('HTTP请求失败:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        console.log('开始解析响应JSON...');
+        const result = await response.json();
+        console.log('响应JSON解析完成:', result);
+        
+        if (result.success) {
+          // 创建成功
+          console.log('✅ 创建角色成功！');
+          console.log('返回数据:', result);
+          const newRole = result.character;
+          console.log('新角色数据:', newRole);
+          
+          console.log('准备关闭弹窗...');
+          closeCreateRoleModal();
+          console.log('弹窗已关闭');
+          
+          console.log('显示成功通知...');
+          showNotification(`角色创建成功！页面即将刷新...`, 'success');
+          console.log('成功通知已显示');
+          
+          // 延迟1秒后刷新页面，让用户看到成功提示
+          console.log('设置1秒后刷新页面...');
+          setTimeout(() => {
+            console.log('🔄 开始刷新页面...');
+            window.location.reload();
+          }, 1000);
+        } else {
+          // 创建失败 - 不关闭弹窗，让用户修改后重试
+          console.log('❌ 创建角色失败');
+          console.log('失败原因:', result.error);
+          showNotification(result.error || '创建角色失败', 'error');
+        }
+      } catch (error) {
+        console.error('❌ 创建角色过程中发生错误:');
+        console.error('错误类型:', error.name);
+        console.error('错误消息:', error.message);
+        console.error('错误堆栈:', error.stack);
+        console.error('完整错误对象:', error);
+        
+        showNotification(`创建角色失败: ${error.message}`, 'error');
+      }
+      
+      console.log('=== 创建角色函数执行完毕 ===');
+    }
+    
+    // 加载自定义角色列表
+    async function loadCustomRoles() {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/characters/custom`);
+        const result = await response.json();
+        
+        if (result.success) {
+          customRoles = result.characters;
+        } else {
+          console.error('加载自定义角色失败:', result.error);
+        }
+      } catch (error) {
+        console.error('加载自定义角色错误:', error);
+      }
+    }
+    
+    // 重新加载角色库（包含自定义角色）
+    async function loadRoleLibrary() {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('加载角色库，URL:', `${backendUrl}/api/characters?include_custom=true`);
+        const response = await fetch(`${backendUrl}/api/characters?include_custom=true`);
+        const result = await response.json();
+        console.log('角色库加载结果:', result);
+        
+        if (result.success) {
+          // 清空现有角色库
+          roleLibrary.length = 0;
+          // 添加所有角色（预设+自定义）
+          roleLibrary.push(...result.characters);
+          
+          console.log('角色库已更新，当前角色数量:', roleLibrary.length);
+          console.log('角色库内容:', roleLibrary);
+          
+          // 注意：不在这里渲染角色库，而是在页面切换后渲染
+          console.log('角色库数据已更新，等待页面切换后渲染');
+        } else {
+          console.error('加载角色库失败:', result.error);
+        }
+      } catch (error) {
+        console.error('加载角色库错误:', error);
+      }
+    }
+    
+    // 删除自定义角色
+    async function deleteCustomRole(roleId) {
+      if (!confirm('确定要删除这个角色吗？此操作不可撤销。')) {
+        return;
+      }
+      
+      try {
+        // 获取后端URL设置，与创建角色保持一致
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        console.log('删除角色 - 后端URL:', backendUrl);
+        console.log('删除角色 - 角色ID:', roleId);
+        console.log('删除角色 - 完整请求URL:', `${backendUrl}/api/characters/custom/${roleId}`);
+        
+        const response = await fetch(`${backendUrl}/api/characters/custom/${roleId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log('删除角色 - HTTP响应状态:', response.status);
+        
+        if (!response.ok) {
+          console.error('删除角色 - HTTP请求失败:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('删除角色 - 响应结果:', result);
+        
+        if (result.success) {
+          showNotification('角色删除成功！', 'success');
+          loadCustomRoles();
+          loadRoleLibrary();
+        } else {
+          showNotification(result.error || '删除角色失败', 'error');
+        }
+      } catch (error) {
+        console.error('删除角色错误:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+      }
+    }
+    
+    // 打开管理角色弹窗
+    function openManageRoleModal() {
+      document.getElementById('manageRoleModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      renderCustomRolesList();
+    }
+    
+    // 关闭管理角色弹窗
+    function closeManageRoleModal() {
+      document.getElementById('manageRoleModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    
+    // 渲染自定义角色列表
+    function renderCustomRolesList() {
+      const customRolesList = document.getElementById('customRolesList');
+      
+      if (customRoles.length === 0) {
+        customRolesList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎭</div>
+            <div class="empty-title">还没有自定义角色</div>
+            <div class="empty-subtitle">点击"创建自定义角色"开始创建你的第一个角色</div>
+          </div>
+        `;
+        return;
+      }
+      
+      customRolesList.innerHTML = customRoles.map(role => `
+        <div class="custom-role-item">
+          <img src="${role.image || 'https://via.placeholder.com/40x40/667eea/ffffff?text=' + encodeURIComponent(role.name.charAt(0))}" 
+               alt="${role.name}头像" class="custom-role-avatar">
+          <div class="custom-role-info">
+            <div class="custom-role-name">${role.name}</div>
+            <div class="custom-role-description">${role.description}</div>
+          </div>
+          <div class="custom-role-actions">
+            <button class="btn-edit" onclick="editCustomRole('${role.id}')">编辑</button>
+            <button class="btn-delete" onclick="deleteCustomRole('${role.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 编辑自定义角色（暂时只显示提示）
+    function editCustomRole(roleId) {
+      showNotification('编辑功能正在开发中...', 'info');
+    }
+    
+    // 绑定创建角色表单提交事件 - 使用事件委托确保元素存在时绑定
+    function bindCreateRoleFormEvent() {
+      const createRoleForm = document.getElementById('createRoleForm');
+      if (createRoleForm) {
+        // 移除之前的事件监听器（如果存在）
+        createRoleForm.removeEventListener('submit', handleCreateRoleSubmit);
+        // 添加新的事件监听器
+        createRoleForm.addEventListener('submit', handleCreateRoleSubmit);
+        console.log('创建角色表单事件已绑定');
+      } else {
+        console.log('创建角色表单元素未找到，将在稍后重试');
+        // 如果元素不存在，稍后重试
+        setTimeout(bindCreateRoleFormEvent, 100);
+      }
+    }
+    
+    // 创建角色表单提交处理函数
+    async function handleCreateRoleSubmit(e) {
+      console.log('=== 表单提交事件开始 ===');
+      e.preventDefault();
+      console.log('✅ 创建角色表单提交事件触发');
+      
+      // 收集表单数据
+      console.log('开始收集表单数据...');
+      const formData = {
+        name: document.getElementById('roleName').value.trim(),
+        description: document.getElementById('roleDescription').value.trim(),
+        personality: document.getElementById('rolePersonality').value.trim(),
+        category: document.getElementById('roleCategory').value,
+        tags: document.getElementById('roleTags').value.trim().split(',').map(tag => tag.trim()).filter(tag => tag),
+        image: document.getElementById('roleImage').value.trim(),
+        created_by: 'user_' + Date.now() // 临时用户ID
+      };
+      
+      console.log('📝 收集到的表单数据:', formData);
+      
+      // 验证表单
+      console.log('开始验证表单...');
+      const isValid = validateCreateRoleForm(formData);
+      console.log('表单验证结果:', isValid);
+      
+      if (isValid) {
+        console.log('✅ 表单验证通过，开始创建角色...');
+        await createCustomRole(formData);
+      } else {
+        console.log('❌ 表单验证失败，不执行创建操作');
+      }
+      
+      console.log('=== 表单提交事件结束 ===');
+    }
+    
+    // 页面加载完成后绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+      // 加载自定义角色
+      loadCustomRoles();
+      
+      // 绑定创建角色表单事件
+      bindCreateRoleFormEvent();
+      
+      // 如果没有选择角色，显示欢迎页面
+      if (!currentRole) {
+        showWelcomePage();
+      }
+    });
+    
+    // 初始化
+    console.log('AI角色扮演平台已加载完成');
+    console.log('快捷键：空格键 - 开始/停止录音');
+    
+    // 页面加载完成后初始化角色库
+    loadRoleLibrary();
+  </script>
+
+  <!-- 自定义角色创建弹窗 -->
+  <div id="createRoleModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">创建自定义角色</h2>
+        <button class="modal-close" onclick="closeCreateRoleModal()">
+          <iconify-icon icon="mdi:close" style="font-size: 20px;"></iconify-icon>
+        </button>
+      </div>
+      
+      <form id="createRoleForm" class="modal-form">
+        <div class="form-group">
+          <label for="roleName" class="form-label">角色名称 *</label>
+          <input type="text" id="roleName" name="name" class="form-input" placeholder="输入角色名称" maxlength="50" required>
+          <div class="form-error" id="nameError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleDescription" class="form-label">角色描述 *</label>
+          <textarea id="roleDescription" name="description" class="form-textarea" placeholder="描述角色的背景、特点等" maxlength="500" required></textarea>
+          <div class="form-error" id="descriptionError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="rolePersonality" class="form-label">性格特点 *</label>
+          <input type="text" id="rolePersonality" name="personality" class="form-input" placeholder="如：友善、幽默、专业" maxlength="200" required>
+          <div class="form-error" id="personalityError"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleCategory" class="form-label">分类</label>
+          <select id="roleCategory" name="category" class="form-select">
+            <option value="custom">自定义</option>
+            <option value="assistant">助手</option>
+            <option value="companion">伙伴</option>
+            <option value="teacher">老师</option>
+            <option value="friend">朋友</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleTags" class="form-label">标签</label>
+          <input type="text" id="roleTags" name="tags" class="form-input" placeholder="用逗号分隔，如：友善,专业,幽默">
+          <div class="form-hint">标签将帮助其他用户发现你的角色</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="roleImage" class="form-label">头像URL</label>
+          <input type="url" id="roleImage" name="image" class="form-input" placeholder="https://example.com/avatar.jpg">
+          <div class="form-hint">可选，留空将使用默认头像</div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeCreateRoleModal()">取消</button>
+          <button type="submit" class="btn-primary">创建角色</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 自定义角色管理弹窗 -->
+  <div id="manageRoleModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">管理自定义角色</h2>
+        <button class="modal-close" onclick="closeManageRoleModal()">
+          <iconify-icon icon="mdi:close" style="font-size: 20px;"></iconify-icon>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div id="customRolesList" class="custom-roles-list">
+          <!-- 自定义角色列表将在这里动态生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body></html>

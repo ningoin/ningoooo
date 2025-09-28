@@ -1,0 +1,22 @@
+{
+  "test-conv-001": {
+    "id": "test-conv-001",
+    "user_id": "test-user-001",
+    "character_name": "测试角色",
+    "character_description": "这是一个测试角色",
+    "created_at": "2025-09-28T01:12:13.660279",
+    "updated_at": "2025-09-28T01:12:13.663279",
+    "messages": [
+      {
+        "role": "user",
+        "content": "你好，我是用户",
+        "timestamp": "2025-09-28T01:12:13.663279"
+      },
+      {
+        "role": "assistant",
+        "content": "你好！我是AI助手",
+        "timestamp": "2025-09-28T01:12:13.663279"
+      }
+    ]
+  }
+}

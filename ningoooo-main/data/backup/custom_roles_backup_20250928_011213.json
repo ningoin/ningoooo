@@ -1,0 +1,17 @@
+{
+  "test-role-001": {
+    "id": "test-role-001",
+    "name": "更新后的测试角色",
+    "description": "这是更新后的描述",
+    "personality": "友善、幽默、乐于助人",
+    "category": "test",
+    "tags": [
+      "测试",
+      "自定义"
+    ],
+    "image": "https://example.com/test.jpg",
+    "created_at": "2025-09-28T01:12:13.664140",
+    "updated_at": "2025-09-28T01:12:13.667146",
+    "is_custom": true
+  }
+}
