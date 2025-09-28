@@ -112,72 +112,7 @@ python app.py
 - **继续对话**: 点击历史对话可继续之前的对话
 - **删除对话**: 支持删除不需要的对话记录
 
-## API接口
 
-### 核心API端点
-
-#### 对话相关
-- `POST /api/chat` - 与AI角色进行对话
-- `GET /api/conversations` - 获取所有对话列表
-- `GET /api/conversations/<id>` - 获取指定对话详情
-- `DELETE /api/conversations/<id>` - 删除对话
-
-#### 角色管理
-- `GET /api/characters` - 获取所有角色列表
-- `GET /api/characters/<id>` - 获取特定角色信息
-- `GET /api/characters/search` - 搜索角色
-- `POST /api/characters/custom` - 创建自定义角色
-- `PUT /api/characters/custom/<id>` - 更新自定义角色
-- `DELETE /api/characters/custom/<id>` - 删除自定义角色
-
-#### 语音功能
-- `POST /api/voice/transcribe` - 语音转文本
-- `POST /api/voice/synthesize` - 文本转语音
-
-#### 系统功能
-- `GET /api/health` - 健康检查
-- `GET /api/avatar/<filename>` - 获取头像图片
-
-### 请求示例
-
-```javascript
-// 发送对话消息
-fetch('http://localhost:5000/api/chat', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    message: '你好，哈利！',
-    character_name: '哈利·波特',
-    character_description: '霍格沃茨魔法学校的学生',
-    role_id: 'harry-potter',
-    conversation_id: 'optional-conversation-id'
-  })
-});
-
-// 创建自定义角色
-const formData = new FormData();
-formData.append('name', '我的角色');
-formData.append('description', '角色描述');
-formData.append('personality', '角色性格');
-formData.append('avatar', avatarFile);
-
-fetch('http://localhost:5000/api/characters/custom', {
-  method: 'POST',
-  body: formData
-});
-
-// 语音转文本
-const audioFormData = new FormData();
-audioFormData.append('file', audioFile);
-audioFormData.append('role_id', 'harry-potter');
-
-fetch('http://localhost:5000/api/voice/transcribe', {
-  method: 'POST',
-  body: audioFormData
-});
-```
 
 ## 配置说明
 
@@ -320,12 +255,3 @@ ls data/backup/
 3. 提交更改：`git commit -am 'Add new feature'`
 4. 推送分支：`git push origin feature/new-feature`
 5. 提交Pull Request
-
-## 更新日志
-
-### v0.1.0
-- 初始版本发布
-- 支持多角色对话
-- 集成语音交互功能
-- 实现自定义角色管理
-- 添加对话历史功能
