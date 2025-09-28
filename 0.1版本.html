@@ -3382,97 +3382,8 @@
       }
     ];
     
-    // 历史对话数据
-    let conversationHistory = [
-      {
-        id: 'conv_001',
-        roleName: '精灵魔法师',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg',
-        lastMessage: '古老的魔法咒语在我心中回响，我能感受到自然的力量在召唤着我...',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
-        messageCount: 15,
-        duration: '12分钟',
-        isFavorite: true,
-        category: 'fantasy'
-      },
-      {
-        id: 'conv_002',
-        roleName: '未来战士',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293722/aigp_1758521101.jpeg',
-        lastMessage: '扫描完成，发现敌方舰队正在接近。建议立即启动防御系统。',
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5小时前
-        messageCount: 8,
-        duration: '6分钟',
-        isFavorite: false,
-        category: 'sci-fi'
-      },
-      {
-        id: 'conv_003',
-        roleName: '古代帝王',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293723/aigp_1758521103.jpeg',
-        lastMessage: '朕观天象，发现异象频现。爱卿以为此乃吉兆还是凶兆？',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1天前
-        messageCount: 22,
-        duration: '18分钟',
-        isFavorite: true,
-        category: 'historical'
-      },
-      {
-        id: 'conv_004',
-        roleName: '名侦探',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
-        lastMessage: '根据现场的证据分析，我怀疑凶手使用了某种特殊的手法...',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2天前
-        messageCount: 12,
-        duration: '9分钟',
-        isFavorite: false,
-        category: 'modern'
-      },
-      {
-        id: 'conv_005',
-        roleName: '机器人',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
-        lastMessage: '系统分析完成。根据我的计算，这个方案的成功率为87.3%。',
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
-        messageCount: 6,
-        duration: '4分钟',
-        isFavorite: false,
-        category: 'sci-fi'
-      },
-      {
-        id: 'conv_006',
-        roleName: '女巫',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
-        lastMessage: '水晶球中显现出模糊的影像，我看到了未来的片段...',
-        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4天前
-        messageCount: 18,
-        duration: '14分钟',
-        isFavorite: true,
-        category: 'fantasy'
-      },
-      {
-        id: 'conv_007',
-        roleName: '太空探险家',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
-        lastMessage: '这颗星球的大气成分与地球相似度达到95%，非常适合人类居住。',
-        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5天前
-        messageCount: 10,
-        duration: '7分钟',
-        isFavorite: false,
-        category: 'sci-fi'
-      },
-      {
-        id: 'conv_008',
-        roleName: '武侠大师',
-        roleImage: 'https://modao.cc/ai/uploads/ai_pics/29/293724/aigp_1758521105.jpeg',
-        lastMessage: '武学之道，在于心境的修炼。招式只是表象，内力才是根本。',
-        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
-        messageCount: 25,
-        duration: '20分钟',
-        isFavorite: true,
-        category: 'historical'
-      }
-    ];
+    // 历史对话数据 - 从后端API获取
+    let conversationHistory = [];
     
     // 角色库数据
     let roleLibrary = [
@@ -4014,6 +3925,49 @@
       }
     }
 
+    // 发送消息到后端并返回完整响应（包括声音信息）
+    async function sendToBackendWithVoice(userText, characterName, characterDescription) {
+      try {
+        // 获取后端URL设置
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const apiUrl = `${backendUrl}/api/chat`;
+        
+        console.log(`发送到后端: ${apiUrl}`);
+        console.log(`消息: ${userText}, 角色: ${characterName}`);
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userText,
+            character_name: characterName,
+            character_description: characterDescription
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`后端错误 ${response.status}:`, errorText);
+          throw new Error(`后端服务错误: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('后端响应:', result);
+        
+        if (result.success) {
+          return result; // 返回完整的响应对象
+        } else {
+          throw new Error(result.error || '未知错误');
+        }
+        
+      } catch (error) {
+        console.error('后端API调用失败:', error);
+        throw error;
+      }
+    }
+
     // 生成AI回复
     async function generateAIResponse(userText) {
       try {
@@ -4028,7 +3982,7 @@
         }
         
         // 调用Python后端
-        const aiResponse = await sendToBackend(
+        const backendResponse = await sendToBackendWithVoice(
           userText, 
           selectedCharacter.name, 
           selectedCharacter.description
@@ -4041,10 +3995,11 @@
         }
         
         // 显示AI回复
-        addMessage(aiResponse, 'received');
+        addMessage(backendResponse.response, 'received');
         
-        // 使用TTS播放AI回复
-        await playTTS(aiResponse);
+        // 使用TTS播放AI回复，如果后端返回了声音信息则使用
+        const voiceToUse = backendResponse.voice || null;
+        await playTTS(backendResponse.response, voiceToUse);
         
       } catch (error) {
         console.error('生成AI回复失败:', error);
@@ -4106,7 +4061,7 @@
     }
     
     // 使用TTS播放AI回复
-    async function playTTS(text) {
+    async function playTTS(text, specifiedVoice = null) {
       try {
         // 检查TTS开关状态
         if (!ttsEnabled) {
@@ -4122,6 +4077,30 @@
         
         console.log('调用TTS API:', ttsUrl);
         
+        // 获取当前角色的声音设置
+        let selectedVoice = 'alloy';  // 默认声音
+        
+        // 优先使用指定的声音（从后端返回）
+        if (specifiedVoice) {
+          selectedVoice = specifiedVoice;
+          console.log('使用后端指定的声音:', selectedVoice);
+        } else if (currentRole) {
+          // 如果有当前角色信息，使用角色特定的声音
+          const roleInfo = characters.find(char => char.name === currentRole || char.id === currentRole);
+          if (roleInfo && roleInfo.voice) {
+            selectedVoice = roleInfo.voice;
+            console.log('使用角色专属声音:', selectedVoice, '角色:', currentRole);
+          } else {
+            // 如果角色库中没有找到，使用设置中的默认声音
+            selectedVoice = document.getElementById('voiceToneSelect').value || 'alloy';
+            console.log('使用设置中的默认声音:', selectedVoice);
+          }
+        } else {
+          // 没有角色信息时，使用设置中的声音
+          selectedVoice = document.getElementById('voiceToneSelect').value || 'alloy';
+          console.log('使用设置中的声音:', selectedVoice);
+        }
+
         // 调用后端TTS API
         const response = await fetch(ttsUrl, {
           method: 'POST',
@@ -4130,7 +4109,7 @@
           },
           body: JSON.stringify({
             text: text,
-            voice: 'alloy',  // 可以根据角色选择不同的声音
+            voice: selectedVoice,
             model: 'tts-1'
           })
         });
@@ -4221,9 +4200,11 @@
           renderRoleLibrary();
         }
         
-        // 如果是历史对话页面，渲染历史记录
+        // 如果是历史对话页面，加载并渲染历史记录
         if (pageId === 'historyPage') {
-          renderHistoryList();
+          loadConversationHistory().then(() => {
+            renderHistoryList();
+          });
         }
         
         // 如果是我的收藏页面，渲染收藏内容
@@ -4304,7 +4285,7 @@
       
       const roleHTML = roles.map(role => `
         <div class="role-card-large ${role.is_custom ? 'custom-role' : ''}" data-role-id="${role.id}">
-          <img src="${role.image}" alt="${role.name}头像" class="role-image-large" loading="lazy">
+          <img src="${getAvatarUrl(role)}" alt="${role.name}头像" class="role-image-large" loading="lazy">
           <div class="role-info-large">
             <div class="role-name-large">
               ${role.name}
@@ -4350,7 +4331,7 @@
         console.log('角色是否为自定义:', role.is_custom);
         console.log('角色完整数据:', JSON.stringify(role, null, 2));
         
-        await selectRole(role.name, role.image);
+        await selectRole(role.name, getAvatarUrl(role));
         switchPage('chatPage');
       } else {
         console.error('未找到角色，ID:', roleId);
@@ -4616,6 +4597,100 @@
       }
     }
     
+    // 从后端API加载历史对话数据
+    async function loadConversationHistory() {
+      try {
+        console.log('开始加载历史对话数据...');
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/conversations`);
+        const data = await response.json();
+        
+        console.log('历史对话API响应:', data);
+        
+        if (data.success && data.conversations) {
+          // 转换后端数据格式为前端需要的格式
+          conversationHistory = data.conversations.map(conv => {
+            const lastMessage = conv.messages && conv.messages.length > 0 
+              ? conv.messages[conv.messages.length - 1].content 
+              : '暂无消息';
+            
+            return {
+              id: conv.id,
+              roleName: conv.character_name,
+              roleImage: getCharacterAvatar(conv.character_name),
+              lastMessage: lastMessage,
+              timestamp: new Date(conv.updated_at || conv.created_at),
+              messageCount: conv.messages ? conv.messages.length : 0,
+              duration: calculateDuration(conv.messages),
+              isFavorite: false, // 暂时设为false，后续可以添加收藏功能
+              category: 'custom' // 暂时设为custom，后续可以根据角色类型分类
+            };
+          });
+          
+          // 按时间排序，最新的在前
+          conversationHistory.sort((a, b) => b.timestamp - a.timestamp);
+          
+          console.log(`成功加载 ${conversationHistory.length} 条历史对话`);
+          return true;
+        } else {
+          console.log('没有历史对话数据或加载失败:', data.error);
+          conversationHistory = [];
+          return false;
+        }
+      } catch (error) {
+        console.error('加载历史对话失败:', error);
+        conversationHistory = [];
+        return false;
+      }
+    }
+    
+    // 获取角色头像
+    function getCharacterAvatar(characterName) {
+      // 尝试从角色库中获取头像
+      const character = roleLibrary.find(role => role.name === characterName);
+      if (character && character.avatar) {
+        return character.avatar;
+      }
+      
+      // 尝试从自定义角色中获取头像
+      const customCharacter = customRoles.find(role => role.name === characterName);
+      if (customCharacter && customCharacter.avatar) {
+        return customCharacter.avatar;
+      }
+      
+      // 默认头像
+      return 'https://modao.cc/ai/uploads/ai_pics/29/293721/aigp_1758521099.jpeg';
+    }
+    
+    // 计算对话时长
+    function calculateDuration(messages) {
+      if (!messages || messages.length < 2) {
+        return '1分钟';
+      }
+      
+      const firstMessage = messages[0];
+      const lastMessage = messages[messages.length - 1];
+      
+      if (firstMessage.timestamp && lastMessage.timestamp) {
+        const startTime = new Date(firstMessage.timestamp);
+        const endTime = new Date(lastMessage.timestamp);
+        const durationMs = endTime - startTime;
+        const durationMinutes = Math.round(durationMs / (1000 * 60));
+        
+        if (durationMinutes < 1) {
+          return '1分钟';
+        } else if (durationMinutes < 60) {
+          return `${durationMinutes}分钟`;
+        } else {
+          const hours = Math.floor(durationMinutes / 60);
+          const minutes = durationMinutes % 60;
+          return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
+        }
+      }
+      
+      return '1分钟';
+    }
+
     // 渲染历史对话列表
     function renderHistoryList(filteredHistory = null) {
       const historyList = document.getElementById('historyList');
@@ -4697,21 +4772,73 @@
     
     // 继续对话
     async function continueConversation(conversationId) {
-      const conv = conversationHistory.find(c => c.id === conversationId);
-      if (conv) {
-        await selectRole(conv.roleName, conv.roleImage);
-        switchPage('chatPage');
-        addMessage(`继续与${conv.roleName}的对话`, 'system');
+      try {
+        console.log(`继续对话: ${conversationId}`);
+        
+        // 从后端获取完整的对话数据
+        const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/conversations/${conversationId}`);
+        const data = await response.json();
+        
+        if (data.success && data.conversation) {
+          const conv = data.conversation;
+          console.log('获取到对话数据:', conv);
+          
+          // 切换到聊天页面
+          await selectRole(conv.character_name, getCharacterAvatar(conv.character_name));
+          switchPage('chatPage');
+          
+          // 显示历史消息
+          if (conv.messages && conv.messages.length > 0) {
+            addMessage(`--- 继续与${conv.character_name}的对话 ---`, 'system');
+            
+            // 显示历史消息（限制显示最近10条消息，避免界面过于拥挤）
+            const recentMessages = conv.messages.slice(-10);
+            recentMessages.forEach(msg => {
+              if (msg.role === 'user') {
+                addMessage(msg.content, 'user');
+              } else if (msg.role === 'assistant') {
+                addMessage(msg.content, 'assistant');
+              }
+            });
+            
+            addMessage(`--- 继续对话 ---`, 'system');
+          } else {
+            addMessage(`开始与${conv.character_name}的新对话`, 'system');
+          }
+        } else {
+          console.error('获取对话数据失败:', data.error);
+          showNotification('获取对话数据失败', 'error');
+        }
+      } catch (error) {
+        console.error('继续对话失败:', error);
+        showNotification('继续对话失败，请稍后重试', 'error');
       }
     }
     
     // 删除对话
-    function deleteConversation(conversationId) {
+    async function deleteConversation(conversationId) {
       if (confirm('确定要删除这个对话记录吗？此操作无法撤销。')) {
-        const index = conversationHistory.findIndex(c => c.id === conversationId);
-        if (index > -1) {
-          conversationHistory.splice(index, 1);
-          renderHistoryList();
+        try {
+          console.log(`删除对话: ${conversationId}`);
+          
+          const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
+          const response = await fetch(`${backendUrl}/api/conversations/${conversationId}`, {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            showNotification('对话删除成功！', 'success');
+            // 重新加载历史对话列表
+            await loadConversationHistory();
+            renderHistoryList();
+          } else {
+            showNotification(data.error || '删除对话失败', 'error');
+          }
+        } catch (error) {
+          console.error('删除对话失败:', error);
+          showNotification('删除对话失败，请稍后重试', 'error');
         }
       }
     }
@@ -4798,7 +4925,7 @@
       favoriteRolesGrid.innerHTML = roles.map(role => `
         <div class="favorite-role-card" data-role-id="${role.id}">
           <div class="favorite-star">⭐</div>
-          <img src="${role.image}" alt="${role.name}头像" class="favorite-role-image" loading="lazy">
+          <img src="${getAvatarUrl(role)}" alt="${role.name}头像" class="favorite-role-image" loading="lazy">
           <div class="favorite-role-info">
             <div class="favorite-role-name">${role.name}</div>
             <div class="favorite-role-description">${role.description}</div>
@@ -4881,7 +5008,7 @@
     async function selectFavoriteRole(roleId) {
       const role = favoriteRoles.find(r => r.id === roleId);
       if (role) {
-        await selectRole(role.name, role.image);
+        await selectRole(role.name, getAvatarUrl(role));
         switchPage('chatPage');
       }
     }
@@ -5577,15 +5704,40 @@
         const backendUrl = document.getElementById('backendUrlInput').value || 'http://localhost:5000';
         console.log('后端URL:', backendUrl);
         console.log('完整请求URL:', `${backendUrl}/api/characters/custom`);
-        console.log('准备发送POST请求...');
         
-        const response = await fetch(`${backendUrl}/api/characters/custom`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
+        // 检查是否有头像文件
+        const avatarFile = document.getElementById('roleAvatar').files[0];
+        console.log('头像文件:', avatarFile);
+        
+        let response;
+        
+        if (avatarFile) {
+          // 如果有头像文件，使用FormData上传
+          const formDataToSend = new FormData();
+          formDataToSend.append('name', formData.name);
+          formDataToSend.append('description', formData.description);
+          formDataToSend.append('personality', formData.personality);
+          formDataToSend.append('category', formData.category);
+          formDataToSend.append('tags', formData.tags.join(','));
+          formDataToSend.append('created_by', formData.created_by);
+          formDataToSend.append('avatar', avatarFile);
+          
+          console.log('使用FormData上传文件');
+          response = await fetch(`${backendUrl}/api/characters/custom`, {
+            method: 'POST',
+            body: formDataToSend
+          });
+        } else {
+          // 如果没有头像文件，使用JSON格式
+          console.log('使用JSON格式发送数据');
+          response = await fetch(`${backendUrl}/api/characters/custom`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          });
+        }
         
         console.log('HTTP响应状态:', response.status);
         console.log('HTTP响应状态文本:', response.statusText);
@@ -5719,8 +5871,10 @@
         
         if (result.success) {
           showNotification('角色删除成功！', 'success');
-          loadCustomRoles();
-          loadRoleLibrary();
+          // 延迟刷新页面，让用户看到成功提示
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } else {
           showNotification(result.error || '删除角色失败', 'error');
         }
@@ -5760,7 +5914,7 @@
       
       customRolesList.innerHTML = customRoles.map(role => `
         <div class="custom-role-item">
-          <img src="${role.image || 'https://via.placeholder.com/40x40/667eea/ffffff?text=' + encodeURIComponent(role.name.charAt(0))}" 
+          <img src="${getAvatarUrl(role)}" 
                alt="${role.name}头像" class="custom-role-avatar">
           <div class="custom-role-info">
             <div class="custom-role-name">${role.name}</div>
@@ -5809,7 +5963,6 @@
         personality: document.getElementById('rolePersonality').value.trim(),
         category: document.getElementById('roleCategory').value,
         tags: document.getElementById('roleTags').value.trim().split(',').map(tag => tag.trim()).filter(tag => tag),
-        image: document.getElementById('roleImage').value.trim(),
         created_by: 'user_' + Date.now() // 临时用户ID
       };
       
@@ -5830,6 +5983,60 @@
       console.log('=== 表单提交事件结束 ===');
     }
     
+    // 获取正确的头像URL
+    function getAvatarUrl(role) {
+      if (!role || !role.image) {
+        return `https://via.placeholder.com/40x40/667eea/ffffff?text=${encodeURIComponent(role?.name?.charAt(0) || '?')}`;
+      }
+      
+      // 如果是相对路径（上传的文件），添加后端URL前缀
+      if (role.image.startsWith('data/pic/')) {
+        const backendUrl = document.getElementById('backendUrlInput')?.value || 'http://localhost:5000';
+        return `${backendUrl}/api/avatar/${role.image.split('/').pop()}`;
+      }
+      
+      // 如果是完整URL，直接返回
+      return role.image;
+    }
+    
+    // 头像预览功能
+    function setupAvatarPreview() {
+      const avatarInput = document.getElementById('roleAvatar');
+      const previewContainer = document.getElementById('avatarPreview');
+      const previewImage = document.getElementById('previewImage');
+      
+      if (avatarInput && previewContainer && previewImage) {
+        avatarInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+              showNotification('请选择图片文件', 'error');
+              avatarInput.value = '';
+              return;
+            }
+            
+            // 检查文件大小 (5MB限制)
+            if (file.size > 5 * 1024 * 1024) {
+              showNotification('图片文件大小不能超过5MB', 'error');
+              avatarInput.value = '';
+              return;
+            }
+            
+            // 创建预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              previewImage.src = e.target.result;
+              previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            previewContainer.style.display = 'none';
+          }
+        });
+      }
+    }
+    
     // 页面加载完成后绑定事件
     document.addEventListener('DOMContentLoaded', function() {
       // 加载自定义角色
@@ -5837,6 +6044,9 @@
       
       // 绑定创建角色表单事件
       bindCreateRoleFormEvent();
+      
+      // 设置头像预览功能
+      setupAvatarPreview();
       
       // 如果没有选择角色，显示欢迎页面
       if (!currentRole) {
@@ -5899,9 +6109,12 @@
         </div>
         
         <div class="form-group">
-          <label for="roleImage" class="form-label">头像URL</label>
-          <input type="url" id="roleImage" name="image" class="form-input" placeholder="https://example.com/avatar.jpg">
-          <div class="form-hint">可选，留空将使用默认头像</div>
+          <label for="roleAvatar" class="form-label">头像图片</label>
+          <input type="file" id="roleAvatar" name="avatar" class="form-input" accept="image/*">
+          <div class="form-hint">可选，支持 PNG、JPG、JPEG、GIF、WEBP 格式，留空将使用默认头像</div>
+          <div id="avatarPreview" class="avatar-preview" style="display: none;">
+            <img id="previewImage" src="" alt="头像预览" style="max-width: 100px; max-height: 100px; border-radius: 8px; margin-top: 10px;">
+          </div>
         </div>
         
         <div class="form-actions">

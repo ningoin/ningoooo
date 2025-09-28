@@ -11,6 +11,7 @@ import tempfile
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from datetime import datetime
+import shutil
 
 # 导入数据管理器
 from data.data_manager import data_manager
@@ -20,6 +21,14 @@ load_dotenv('config.env')
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
+
+# 配置文件上传
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+UPLOAD_FOLDER = 'data/pic'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+# 确保上传文件夹存在
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +42,66 @@ OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
 # 注意：现在使用文件存储替代内存存储
 # conversations 和 custom_roles 变量已移除，改用 data_manager
 
+def allowed_file(filename):
+    """检查文件扩展名是否允许"""
+    if not filename or '.' not in filename:
+        return False
+    try:
+        file_ext = filename.rsplit('.', 1)[1].lower()
+        return file_ext in ALLOWED_EXTENSIONS
+    except IndexError:
+        return False
+
+def save_uploaded_avatar(file, role_name):
+    """保存上传的头像文件"""
+    if file and allowed_file(file.filename):
+        # 先从原始文件名获取扩展名，因为secure_filename可能会移除它
+        original_filename = file.filename
+        if '.' in original_filename:
+            file_ext = original_filename.rsplit('.', 1)[1].lower()
+        else:
+            # 如果没有扩展名，根据MIME类型推断
+            mime_type = file.content_type
+            if mime_type == 'image/jpeg':
+                file_ext = 'jpg'
+            elif mime_type == 'image/png':
+                file_ext = 'png'
+            elif mime_type == 'image/gif':
+                file_ext = 'gif'
+            elif mime_type == 'image/webp':
+                file_ext = 'webp'
+            else:
+                file_ext = 'jpg'  # 默认使用jpg
+        
+        # 处理角色名称，保留中文字符但确保安全
+        # 移除或替换不安全的字符，但保留中文
+        import re
+        safe_role_name = re.sub(r'[<>:"/\\|?*]', '_', role_name)
+        safe_role_name = safe_role_name.strip()
+        
+        # 如果角色名称为空或只包含特殊字符，使用默认名称
+        if not safe_role_name or safe_role_name == '_':
+            safe_role_name = '角色'
+        
+        new_filename = f"{safe_role_name}.{file_ext}"
+        
+        # 确保文件名唯一
+        file_path = os.path.join(UPLOAD_FOLDER, new_filename)
+        counter = 1
+        while os.path.exists(file_path):
+            new_filename = f"{safe_role_name}_{counter}.{file_ext}"
+            file_path = os.path.join(UPLOAD_FOLDER, new_filename)
+            counter += 1
+        
+        # 保存文件
+        file.save(file_path)
+        logger.info(f"头像文件已保存: {file_path}")
+        
+        # 返回相对路径，用于存储到数据库
+        return f"data/pic/{new_filename}"
+    
+    return None
+
 # 角色库数据（与前端保持一致）
 ROLE_LIBRARY = [
     {
@@ -42,7 +111,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/哈利·波特.jpg',
         'category': '电影',
         'tags': ['魔法', '霍格沃茨', '格兰芬多', '魁地奇', '勇敢'],
-        'personality': '勇敢、忠诚、真诚、略显冲动、善良'
+        'personality': '勇敢、忠诚、真诚、略显冲动、善良',
+        'voice': 'fable'  # 活泼的男性声音，适合少年
     },
     {
         'id': 'socrates',
@@ -51,7 +121,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/苏格拉底.jpg',
         'category': '其他',
         'tags': ['哲学', '古希腊', '问答法', '智慧', '思考'],
-        'personality': '平和、耐心、智慧、善于引导、谦逊'
+        'personality': '平和、耐心、智慧、善于引导、谦逊',
+        'voice': 'echo'  # 温暖的男性声音，适合哲学家
     },
     {
         'id': 'trailblazer',
@@ -60,7 +131,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/开拓者.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '毁灭', '物理', '星核', '星穹列车'],
-        'personality': '勇敢、坚定、有责任感、关心队友、有时迷茫'
+        'personality': '勇敢、坚定、有责任感、关心队友、有时迷茫',
+        'voice': 'alloy'  # 中性声音，适合主角
     },
     {
         'id': 'himeko',
@@ -69,7 +141,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/姬子.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '火元素', '毁灭', '输出', '战斗'],
-        'personality': '自信、有傲气、专注效率、冷静、高傲'
+        'personality': '自信、有傲气、专注效率、冷静、高傲',
+        'voice': 'nova'  # 明亮的女性声音，适合成熟女性
     },
     {
         'id': 'danheng',
@@ -78,7 +151,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/丹恒·饮月.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '输出', '控制', '神秘', '诗意'],
-        'personality': '成熟、神秘、文艺、忠诚、战术思维'
+        'personality': '成熟、神秘、文艺、忠诚、战术思维',
+        'voice': 'onyx'  # 深沉的男性声音，适合神秘角色
     },
     {
         'id': 'fuxuan',
@@ -87,7 +161,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/符玄.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '符文', '玄学', '输出', '力量'],
-        'personality': '稳重、锐气、执着、专业、果断'
+        'personality': '稳重、锐气、执着、专业、果断',
+        'voice': 'shimmer'  # 柔和的女性声音，适合神秘角色
     },
     {
         'id': 'silverwolf',
@@ -96,7 +171,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/银狼.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '刺客', '敏捷', '弱点', '孤傲'],
-        'personality': '敏捷、果断、孤傲、独立、信任队友'
+        'personality': '敏捷、果断、孤傲、独立、信任队友',
+        'voice': 'nova'  # 明亮的女性声音，适合自信角色
     },
     {
         'id': 'topaz',
@@ -105,7 +181,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/托帕.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '挑战', '突破', '极限', '受欢迎'],
-        'personality': '外向、率性、喜欢挑战、不退缩、有斗志'
+        'personality': '外向、率性、喜欢挑战、不退缩、有斗志',
+        'voice': 'nova'  # 明亮的女性声音，适合外向角色
     },
     {
         'id': 'march7th',
@@ -114,7 +191,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/三月七.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '存护', '支援', '冷静', '责任感'],
-        'personality': '冷静、理性、有责任感、内省、克制'
+        'personality': '冷静、理性、有责任感、内省、克制',
+        'voice': 'shimmer'  # 柔和的女性声音，适合活泼少女
     },
     {
         'id': 'shilva',
@@ -123,7 +201,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/希露瓦.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '记忆', '智识', '探索', '知识'],
-        'personality': '有信念、学术性、哲理性、探索精神、重视真相'
+        'personality': '有信念、学术性、哲理性、探索精神、重视真相',
+        'voice': 'nova'  # 明亮的女性声音，适合热情角色
     },
     {
         'id': 'esther',
@@ -132,7 +211,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/艾丝妲.png',
         'category': '游戏',
         'tags': ['星穹铁道', '开朗', '坚定', '有理想', '热爱挑战'],
-        'personality': '开朗、坚定、有理想、热爱挑战、中庸有特色'
+        'personality': '开朗、坚定、有理想、热爱挑战、中庸有特色',
+        'voice': 'nova'  # 明亮的女性声音，适合领导者
     },
     {
         'id': 'jingyuan',
@@ -141,7 +221,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/景元.png',
         'category': '游戏',
         'tags': ['星穹铁道', '神策将军', '仙舟罗浮', '神君', '兵法'],
-        'personality': '沉稳睿智、深谋远虑、慵懒、威严、珍视和平'
+        'personality': '沉稳睿智、深谋远虑、慵懒、威严、珍视和平',
+        'voice': 'onyx'  # 深沉的男性声音，适合将军
     },
     {
         'id': 'kafka',
@@ -150,7 +231,8 @@ ROLE_LIBRARY = [
         'image': 'data/pic/卡芙卡.jpg',
         'category': '游戏',
         'tags': ['星穹铁道', '星核猎手', '命运', '剧本', '艾利欧'],
-        'personality': '优雅危险、慵懒妩媚、自信、掌控感、神秘'
+        'personality': '优雅危险、慵懒妩媚、自信、掌控感、神秘',
+        'voice': 'shimmer'  # 柔和的女性声音，适合优雅角色
     },
     {
         'id': 'firefly',
@@ -454,6 +536,17 @@ def chat_with_ai():
         data_manager.add_message_to_conversation(conversation_id, 'user', user_message)
         data_manager.add_message_to_conversation(conversation_id, 'assistant', ai_response)
         
+        # 获取角色的声音配置
+        role_voice = 'alloy'  # 默认声音
+        if role_id:
+            role_info = get_role_by_id(role_id)
+            if role_info and 'voice' in role_info:
+                role_voice = role_info['voice']
+        elif character_name:
+            role_info = get_role_by_name(character_name)
+            if role_info and 'voice' in role_info:
+                role_voice = role_info['voice']
+        
         return jsonify({
             'success': True,
             'response': ai_response,
@@ -461,7 +554,8 @@ def chat_with_ai():
             'character_description': character_description,
             'role_id': role_id,
             'conversation_id': conversation_id,
-            'user_id': user_id
+            'user_id': user_id,
+            'voice': role_voice  # 添加声音信息
         })
         
     except Exception as e:
@@ -571,6 +665,47 @@ def call_tts_api(text, voice='alloy', model='tts-1'):
         logger.error(error_msg)
         raise Exception(error_msg)
 
+def get_default_voice_for_character(character_name):
+    """
+    根据角色名称推断默认声音
+    """
+    # 女性角色常见名称关键词
+    female_keywords = ['女', '姐', '妹', '娘', '小姐', '夫人', '公主', '女王', '母', '妈']
+    # 男性角色常见名称关键词  
+    male_keywords = ['先生', '哥', '弟', '爸', '父', '王', '将军', '博士', '队长']
+    
+    # 女性声音池
+    female_voices = ['nova', 'shimmer', 'alloy']
+    # 男性声音池
+    male_voices = ['onyx', 'echo', 'fable']
+    
+    character_lower = character_name.lower()
+    
+    # 检查女性关键词
+    for keyword in female_keywords:
+        if keyword in character_name:
+            return female_voices[hash(character_name) % len(female_voices)]
+    
+    # 检查男性关键词
+    for keyword in male_keywords:
+        if keyword in character_name:
+            return male_voices[hash(character_name) % len(male_voices)]
+    
+    # 根据一些具体角色名称判断
+    female_names = ['三月七', '姬子', '符玄', '银狼', '托帕', '希露瓦', '艾丝妲', '卡芙卡', '流萤', '砂金', '知更鸟', 
+                   '娜塔莎·罗曼诺夫', '旺达·马克西莫夫']
+    male_names = ['哈利·波特', '苏格拉底', '开拓者', '丹恒·饮月', '景元', '星期日', '托尼·斯塔克', 
+                 '史蒂夫·罗杰斯', '索尔·奥丁森', '克林特·巴顿', '布鲁斯·班纳', '幻视', 
+                 '彼得·帕克', '特查拉', '史蒂芬·斯特兰奇']
+    
+    if character_name in female_names:
+        return female_voices[hash(character_name) % len(female_voices)]
+    elif character_name in male_names:
+        return male_voices[hash(character_name) % len(male_voices)]
+    
+    # 默认返回中性声音
+    return 'alloy'
+
 def get_role_by_id(role_id):
     """
     根据角色ID获取角色信息
@@ -578,11 +713,17 @@ def get_role_by_id(role_id):
     # 先在预设角色库中查找
     for role in ROLE_LIBRARY:
         if role['id'] == role_id:
+            # 如果角色没有声音配置，添加默认声音
+            if 'voice' not in role:
+                role['voice'] = get_default_voice_for_character(role['name'])
             return role
     
     # 再在自定义角色中查找
     custom_role = data_manager.get_custom_role(role_id)
     if custom_role:
+        # 如果自定义角色没有声音配置，添加默认声音
+        if 'voice' not in custom_role:
+            custom_role['voice'] = get_default_voice_for_character(custom_role['name'])
         return custom_role
     
     return None
@@ -594,12 +735,18 @@ def get_role_by_name(role_name):
     # 先在预设角色库中查找
     for role in ROLE_LIBRARY:
         if role['name'] == role_name:
+            # 如果角色没有声音配置，添加默认声音
+            if 'voice' not in role:
+                role['voice'] = get_default_voice_for_character(role['name'])
             return role
     
     # 再在自定义角色中查找
     custom_roles_list = data_manager.get_all_custom_roles()
     for role in custom_roles_list:
         if role['name'] == role_name:
+            # 如果自定义角色没有声音配置，添加默认声音
+            if 'voice' not in role:
+                role['voice'] = get_default_voice_for_character(role['name'])
             return role
     
     return None
@@ -1563,12 +1710,36 @@ def create_custom_character():
     创建自定义角色
     """
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': '请求数据格式错误'
-            }), 400
+        # 检查是否有文件上传
+        avatar_file = None
+        if 'avatar' in request.files:
+            avatar_file = request.files['avatar']
+        
+        # 获取表单数据
+        if avatar_file:
+            # 如果有文件上传，从表单获取数据
+            data = {
+                'name': request.form.get('name', '').strip(),
+                'description': request.form.get('description', '').strip(),
+                'personality': request.form.get('personality', '').strip(),
+                'category': request.form.get('category', 'custom'),
+                'tags': request.form.get('tags', '').strip(),
+                'created_by': request.form.get('created_by', 'anonymous')
+            }
+            
+            # 处理标签
+            if data['tags']:
+                data['tags'] = [tag.strip() for tag in data['tags'].split(',') if tag.strip()]
+            else:
+                data['tags'] = []
+        else:
+            # 如果没有文件上传，从JSON获取数据
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'error': '请求数据格式错误'
+                }), 400
         
         # 验证必填字段
         is_valid, error_msg = validate_role_data(data)
@@ -1589,6 +1760,20 @@ def create_custom_character():
         # 生成角色ID
         role_id = generate_role_id(data['name'])
         
+        # 处理头像
+        avatar_path = ''
+        if avatar_file and avatar_file.filename:
+            # 保存上传的头像文件
+            avatar_path = save_uploaded_avatar(avatar_file, data['name'])
+            if not avatar_path:
+                return jsonify({
+                    'success': False,
+                    'error': '头像文件格式不支持，请上传 PNG、JPG、JPEG、GIF 或 WEBP 格式的图片'
+                }), 400
+        elif 'image' in data and data['image']:
+            # 使用提供的URL
+            avatar_path = data['image']
+        
         # 构建角色数据
         custom_role = {
             'id': role_id,
@@ -1597,7 +1782,7 @@ def create_custom_character():
             'personality': data['personality'].strip(),
             'category': data.get('category', 'custom'),
             'tags': data.get('tags', []),
-            'image': data.get('image', ''),
+            'image': avatar_path,
             'is_custom': True,
             'created_at': datetime.now().isoformat(),
             'created_by': data.get('created_by', 'anonymous')
@@ -1714,6 +1899,8 @@ def delete_custom_character(role_id):
             }), 404
         
         role_name = role['name']
+        
+        # 删除角色数据
         success = data_manager.delete_custom_role(role_id)
         
         if not success:
@@ -1721,6 +1908,25 @@ def delete_custom_character(role_id):
                 'success': False,
                 'error': '删除角色失败'
             }), 500
+        
+        # 删除对应的图片文件
+        image_path = role.get('image')
+        if image_path:
+            try:
+                # 构建完整的图片文件路径
+                if image_path.startswith('data/pic/'):
+                    full_image_path = image_path
+                else:
+                    full_image_path = f"data/pic/{image_path}"
+                
+                if os.path.exists(full_image_path):
+                    os.remove(full_image_path)
+                    logger.info(f"删除角色图片文件: {full_image_path}")
+                else:
+                    logger.warning(f"图片文件不存在: {full_image_path}")
+            except Exception as e:
+                logger.error(f"删除图片文件失败: {str(e)}")
+                # 图片删除失败不影响角色删除的成功
         
         logger.info(f"删除自定义角色成功: {role_name} (ID: {role_id})")
         
@@ -1769,6 +1975,30 @@ def get_conversations():
         })
     except Exception as e:
         logger.error(f"获取对话列表错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/conversations/<conversation_id>', methods=['GET'])
+def get_conversation(conversation_id):
+    """
+    获取指定对话的详细信息
+    """
+    try:
+        conversation = data_manager.get_conversation(conversation_id)
+        if conversation:
+            return jsonify({
+                'success': True,
+                'conversation': conversation
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '对话不存在'
+            }), 404
+    except Exception as e:
+        logger.error(f"获取对话错误: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -1860,6 +2090,21 @@ def health_check():
         }
     })
 
+@app.route('/api/avatar/<filename>')
+def serve_avatar(filename):
+    """
+    提供头像图片文件服务
+    """
+    try:
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if os.path.exists(file_path):
+            return send_file(file_path)
+        else:
+            return jsonify({'error': '文件不存在'}), 404
+    except Exception as e:
+        logger.error(f"提供头像文件错误: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     print("=" * 60)
     print("🚀 启动AI角色扮演平台后端服务...")
@@ -1881,8 +2126,10 @@ if __name__ == '__main__':
     print("  • PUT  /api/characters/custom/<id> - 更新自定义角色")
     print("  • DELETE /api/characters/custom/<id> - 删除自定义角色")
     print("  • GET  /api/conversations - 获取对话列表")
+    print("  • GET  /api/conversations/<id> - 获取指定对话详情")
     print("  • GET  /api/conversations/character/<name> - 获取特定角色对话历史")
     print("  • DELETE /api/conversations/<id> - 删除对话")
+    print("  • GET  /api/avatar/<filename> - 获取头像图片")
     print("  • GET  /api/health - 健康检查")
     print("=" * 60)
     print("🌐 请在浏览器中访问 http://localhost:5000/api/health 检查服务状态")
